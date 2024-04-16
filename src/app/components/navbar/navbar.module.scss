@@ -1,0 +1,51 @@
+@import "@/app/styles/styling.module.scss";
+
+.navcontainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  >* {
+    flex: 1;
+  }
+
+  .navleft {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .navright {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+
+  a {
+    text-decoration: none;
+    color: white;
+    font-family: $font;
+    font-size: $small;
+
+
+  }
+
+  :hover {
+    color: $maincolor;
+    transition: all 0.8s ease-in-out;
+  }
+
+
+  button {
+    border-color: rgb(255, 255, 255);
+    color: white;
+    background-color: none;
+    background-color: transparent;
+    border-style: none;
+    border: 1px solid;
+    padding: 0.5rem 1rem;
+    width: 150px;
+    font-size: $small;
+  }
+
+}
