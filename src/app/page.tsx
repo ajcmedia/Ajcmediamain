@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Navbar from "@/app/components/navbar/page";
 import styles from "@/app/home.module.scss"
+import Footer from "@/app/components/footer/page";
 
 export default function Home() {
   return (
@@ -8,7 +9,7 @@ export default function Home() {
       <div className={styles.landingBanner}>
 
 
-        
+
         <div className={styles.landingBannerContent}>
           <Navbar />
           <div className={styles.landingBannerContentText}>
@@ -74,8 +75,13 @@ export default function Home() {
           </div>
         </div>
 
-
       </div>
+
+
+      <Footer />
+   
+
+
     </main>
   );
 }
