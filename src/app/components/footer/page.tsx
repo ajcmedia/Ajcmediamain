@@ -9,7 +9,7 @@ export default function Footer() {
       <div className={styles.footerContent}>
         <div className={styles.logo}> <Image src="/footer.svg" alt="logo" width={170} height={170} /></div>
 
-        <div className={styles.slogan}><h1>Let’s capture and cherish your moments forever, <span>Book now!</span></h1></div>
+        <div className={styles.slogan}><h1>Let’s capture and cherish<br/>your moments forever, <span>Book now!</span></h1></div>
 
         <div className={styles.footerLinksContainer}>
 
