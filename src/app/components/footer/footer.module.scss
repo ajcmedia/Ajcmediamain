@@ -3,8 +3,8 @@
 .mainFooterContainer {
   background-color: #3B3B3B;
   width: 100%;
-  
-  
+
+
 
 
   .footerContent {
@@ -13,7 +13,7 @@
     justify-content: center;
     margin: $margins;
     padding-top: 20px;
-    gap: 50px ;
+    gap: 50px;
 
 
     .logo {
@@ -57,6 +57,8 @@
 
       span {
         color: $maincolor;
+        cursor: pointer;
+        transition: 1s;
       }
     }
 
@@ -80,7 +82,7 @@
         align-items: center;
         gap: 10px;
       }
-      
+
 
     }
   }
