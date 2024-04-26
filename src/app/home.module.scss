@@ -19,6 +19,29 @@
   .collageMain {
     display: flex;
     justify-content: center;
+
+    .collageMain2{ 
+      display: flex;
+      flex-direction: column;
+      margin: $margins;
+      color: white;
+      text-align: center;
+      font-family: $font;
+      gap: 20px;
+      
+      span {
+        color: $maincolor;
+      }
+      
+
+      >p:nth-child(3) {
+        font-size: $medium;
+        font-weight: 300;
+        color: rgb(116, 116, 116);
+        letter-spacing: 6.11px;
+      
+      }
+    }
   }
 
   .contentsMain {
