@@ -2,6 +2,7 @@ import Image from "next/image";
 import Navbar from "@/app/components/navbar/page";
 import styles from "@/app/home.module.scss"
 import Footer from "@/app/components/footer/page";
+import Collage from "./components/collage/page";
 
 export default function Home() {
   return (
@@ -74,6 +75,7 @@ export default function Home() {
           </div>
         </div>
         <div className={styles.collageMain}>
+          <Collage/>
           {/* 
           portrait1 = https://lh3.googleusercontent.com/pw/AP1GczNkyucx_WIidTWJl1ob80uinEY8ot2eNNf2oLyb_VlxMcNzuEydzpv9225qGTi8wG3CwBKj77UUv7X-ZUNvEBmOmpA8qPZfx-Lq7EyoqrjrbEfHz8ZNXnI5bCb49QEFsozx_Ob00DBjfoYG5cVSkn7P=w630-h945-s-no-gm?authuser=0
           portrait2 = https://lh3.googleusercontent.com/pw/AP1GczPsriI0Xv8HhExQR7s-RbIx5Yz_s5lysXvYqFcvNa3UU5EBTZLjmvADlsnV14Mjhup1UWxcdULDqROaKUDa_SG-VwLUhlAoTK0ldIb5pe3qJ2p_GIixTT51JprU6WsQa2qeC6ifLZbHjup7OwDAZWkK=w630-h945-s-no-gm?authuser=0

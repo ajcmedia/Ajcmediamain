@@ -16,6 +16,11 @@
 
   }
 
+  .collageMain {
+    display: flex;
+    justify-content: center;
+  }
+
   .contentsMain {
     margin: $margins;
     display: flex;
