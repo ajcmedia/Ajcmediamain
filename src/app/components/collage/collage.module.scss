@@ -1,0 +1,37 @@
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    max-width: 1140px;
+    width: 100%;
+
+    > div:nth-child(n+2) {
+        max-width: 800px;
+    }
+
+    > div img {
+        border: 3px solid white;
+        object-fit: cover;
+    }
+    .portrait {
+        display: flex;
+        gap: 15px;
+    }
+
+    .cars {
+        display: flex;
+        gap: 15px;
+    }
+
+    .couples {
+        display: flex;
+        gap: 15px;
+    }
+
+    .landscape {
+        display: flex;
+        gap: 15px;
+    }
+}
