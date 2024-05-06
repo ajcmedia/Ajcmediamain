@@ -1,0 +1,59 @@
+@import "@/app/styles/styling.module.scss";
+
+.mainProductContainer {
+
+  .productCards{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+
+    .card{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: #3B3B3B;
+      padding: 20px;
+      border-radius: 5;
+      box-shadow: 2px 4px 4px 2px rgba(0, 0, 0, 0.25);
+      width: 300px;
+
+
+
+      .cardInfo{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .cardTitle{
+          font-size: $medium;
+          font-weight: 500;
+          color: white;
+        }
+
+        .cardPrice{
+          font-size: $small;
+          font-weight: 300;
+          color: rgb(116, 116, 116);
+        }
+
+        .cardButton{
+          border-color: rgb(255, 255, 255);
+          color: white;
+          background-color: none;
+          background-color: transparent;
+          border-style: none;
+          border: 1px solid;
+          padding: 0.5rem 1rem;
+          width: 150px;
+          font-size: $small;
+        }
+      }
+      
+     }.card:hover {
+      background-color: $maincolor;
+      transition: all 0.8s ease-in-out;
+      scale: 1.01;
+     }
+  }
+}

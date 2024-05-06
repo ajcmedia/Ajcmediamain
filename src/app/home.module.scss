@@ -44,6 +44,25 @@
     }
   }
 
+  .productMain {
+    background-color:#3B3B3B ;
+    
+    .productMain2 {
+      display: flex;
+      flex-direction: column;
+      margin: $margins;
+      color: white;
+      font-family: $font;
+      gap: 20px;
+      padding-top: 20px;
+      padding-bottom: 40px;
+      span {
+        color: $maincolor;
+      }
+
+    }
+  }
+
   .contentsMain {
     margin: $margins;
     display: flex;
