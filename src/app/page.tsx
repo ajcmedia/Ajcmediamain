@@ -3,6 +3,7 @@ import Navbar from "@/app/components/navbar/page";
 import styles from "@/app/home.module.scss"
 import Footer from "@/app/components/footer/page";
 import Collage from "./components/collage/page";
+import Products from "./components/products/page";
 
 export default function Home() {
   return (
@@ -82,6 +83,11 @@ export default function Home() {
               Portraits / Landscapes / Events / Product shots
             </p>
             <Collage />
+          </div>
+        </div>
+        <div className={styles.productMain}>
+          <div className={styles.productMain2}>
+          <Products />
           </div>
         </div>
         <Footer />
