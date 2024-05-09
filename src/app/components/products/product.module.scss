@@ -55,5 +55,20 @@
       transition: all 0.8s ease-in-out;
       scale: 1.01;
      }
+
+  
+  }
+
+  .booknow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 50px;
+
+    img {
+      width: 20px;
+      height: 20px;
+    }
   }
 }

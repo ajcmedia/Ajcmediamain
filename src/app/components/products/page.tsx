@@ -44,6 +44,10 @@ export default function Products() {
             <p>I can provide photo albums for my clients as a separate part of the package if they want to avail. want to see samples? let me know</p>
             </div>
         </div>
+        <div className={styles.booknow}>
+        <p>What are you waiting for? Book now</p>
+        <Image src="/down.svg" alt="logo" width={50} height={50} />
+        </div>
       </div>
 
     </main>
