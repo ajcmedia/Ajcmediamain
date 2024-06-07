@@ -4,49 +4,158 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: $margins;
+  margin: $marginsNav;
 
-  >* {
-    flex: 1;
-  }
 
-  .navleft {
-    display: flex;
-    justify-content: space-between;
-  }
 
+  .navleft,
   .navright {
+    display: flex;
+    gap: 50px;
+    align-items: center;
+    color: white;
+    font-family: $font;
+    font-size: $small;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+
+    a {
+      text-decoration: none;
+      color: white;
+    }
+
+    a:hover {
+      color: $maincolor;
+    }
+  }
+
+  .socials {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 150px;
+
+    .socialLinks {
+      position: relative;
+
+      .socialshover {
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: all 0.5s ease-in-out;
+      }
+
+      .socialshover:hover {
+        opacity: 1;
+        cursor: pointer;
+      }
+    }
+  }
+
+  @import "@/app/styles/styling.module.scss";
+
+  .navcontainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: $marginsNav;
+
+    .navleft,
+    .navright {
+      display: flex;
+      gap: 50px;
+      align-items: center;
+      color: white;
+      font-family: $font;
+      font-size: $small;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.3s;
+
+      a {
+        text-decoration: none;
+        color: white;
+      }
+
+      a:hover {
+        color: $maincolor;
+      }
+    }
+
+    .navright {
+      .socials {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 150px;
+
+        .socialLinks {
+          position: relative;
+
+          .socialshover {
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: all 0.5s ease-in-out;
+          }
+
+          .socialshover:hover {
+            opacity: 1;
+            cursor: pointer;
+          }
+        }
+      }
+    }
+
+    .hamburger {
+      display: none;
+      cursor: pointer;
+
+      div {
+        width: 25px;
+        height: 3px;
+        background-color: white;
+        margin: 5px;
+        transition: 0.4s;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navleft {
+        display: none;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .navright {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+        display: none;
+      }
+
+      .navright.show {
+        display: flex;
+      }
+    }
   }
 
 
   a {
     text-decoration: none;
     color: white;
-    font-family: $font;
-    font-size: $small;
-
-
   }
 
-  :hover {
+  a:hover {
     color: $maincolor;
-    transition: all 0.8s ease-in-out;
   }
-
-
-  button {
-    border-color: rgb(255, 255, 255);
-    color: white;
-    background-color: none;
-    background-color: transparent;
-    border-style: none;
-    border: 1px solid;
-    padding: 0.5rem 1rem;
-    width: 150px;
-    font-size: $small;
-  }
-
 }

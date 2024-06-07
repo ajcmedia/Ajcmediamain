@@ -11,13 +11,14 @@ export default function Home() {
     <main className={styles.landingContainer}>
 
       <div className={styles.landingContainer2}>
+         <Navbar />
         <div className={styles.landingBanner}>
-          <Navbar />
+         
           <div className={styles.contentsMain}>
 
             <h1>My name is Jayson, I am a <span>Photographer</span></h1>
             <p>I wanted to enhance my photography skills by sharing what i am capable of to others</p>
-            <div className={styles.socials}>
+            {/* <div className={styles.socials}>
               <div className={styles.socialLinks}>
                 <Image
                   width={30}
@@ -73,7 +74,7 @@ export default function Home() {
                   />
                 </a>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
         <div className={styles.collageMain}>
