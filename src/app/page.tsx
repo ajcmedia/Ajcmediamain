@@ -78,8 +78,8 @@ export default function Home() {
         </div>
         <div className={styles.collageMain}>
           <div className={styles.collageMain2}>
-            <h1>&#8212; Image Showcase &#8212;</h1>
-            <p>Discover captivating portraits, landscapes, and event photography showcasing the beauty of <span>Vancouver</span> life. From birthdays to baby showers, each moment is expertly captured for timeless <span>memories</span>. Let's create something unforgettable together!</p>
+            <h2>Few Samples</h2>
+            <p>Discover captivating portraits, and event photography showcasing the beauty of <span>Vancouver</span> life. From birthdays to baby showers, each moment is expertly captured for timeless <span>memories</span>. Let's create something unforgettable together!</p>
             <p>
               Portraits / Landscapes / Events / Product shots
             </p>

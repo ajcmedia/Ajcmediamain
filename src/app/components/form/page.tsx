@@ -9,7 +9,7 @@ export default function Form() {
       <div className={styles.mainFormContainer2}> {/* first form of the Jinjuriki */}
         <div className={styles.leftText}>
           <h1>Any <span>Questions?</span><br /></h1>
-          <p>If you have any more questions regarding rates and wanting more image samples feel free to leave me a message</p>
+          <p>If you have any more questions regarding rates and wanted to see more image samples feel free to leave me a message</p>
         </div>
         <div className={styles.rightForm}>
           <input type="text" placeholder="Name" />
