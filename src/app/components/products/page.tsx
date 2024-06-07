@@ -6,8 +6,8 @@ import Image from 'next/image'
 export default function Products() {
   return (
     <main className={styles.mainProductContainer}>
-      <div>
-        <h1>Products <span>|</span></h1>
+      <div className={styles.contentProductContainer}>
+        <h1>Products</h1>
         <p>These are the things that are available within availing the <span>photoshoot sessions</span> and also additional products that can be purchased separately </p>
         <div className={styles.productCards}>
           <div className={styles.card}>

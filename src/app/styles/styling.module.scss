@@ -7,3 +7,31 @@ sans-serif;
 $maincolor : #FF5B37;
 
 $margins :50px 400px 0 400px;
+
+$marginsNav : 20px 200px 20px 200px;
+
+@mixin respond-to($device) {
+  @if $device =="phone" {
+    @media (max-width: 600px) {
+      @content;
+    }
+  }
+
+  @if $device =="phonexs" {
+    @media (max-width: 485px) {
+      @content;
+    }
+  }
+
+  @else if $device =="tablet" {
+    @media (max-width: 900px) {
+      @content;
+    }
+  }
+
+  @else if $device =="desktop" {
+    @media (min-width: 1200px) {
+      @content;
+    }
+  }
+}

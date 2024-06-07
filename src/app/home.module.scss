@@ -12,7 +12,7 @@
     flex-direction: column;
     height: auto;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-    padding-bottom: 100px;
+    
 
   }
 
@@ -73,41 +73,48 @@
     font-size: $medium;
     font-family: $font;
     font-weight: 300;
+    padding-top: 100px;
+    padding-bottom: 100px;
+
+    h1 {
+      color: white;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
 
 
     span {
       color: $maincolor;
     }
 
-    .socials {
-      display: flex;
-      justify-content: space-between;
-      width: 150px;
-      margin-top: 20px;
+
+  }
+}
 
 
-      .socialLinks {
-        position: relative;
+@include respond-to("tablet") {
+  .landingContainer {
+    .landingBanner {
+      height: 100vh;
+    }
 
-        .socialshover {
-          opacity: 0;
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          transition: all 0.5s ease-in-out;
-        }
-
-        .socialshover:hover {
-          opacity: 1;
-          cursor: pointer;
-        }
+    .collageMain {
+      .collageMain2 {
+        font-size: $medium;
       }
     }
 
+    .productMain {
+      .productMain2 {
+        font-size: $medium;
+      }
+    }
 
-
-
+    .contentsMain {
+      h1 {
+        font-size: 2rem;
+      }
+    }
   }
+  
 }

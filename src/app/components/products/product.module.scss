@@ -1,74 +1,82 @@
 @import "@/app/styles/styling.module.scss";
 
 .mainProductContainer {
-
-  .productCards{
+  .contentProductContainer {
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
+    flex-direction: column;
+    
 
-    .card{
+    .productCards {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background-color: #3B3B3B;
-      padding: 20px;
-      border-radius: 5;
-      box-shadow: 2px 4px 4px 2px rgba(0, 0, 0, 0.25);
-      width: 300px;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
 
-
-
-      .cardInfo{
+      .card {
         display: flex;
         flex-direction: column;
         gap: 10px;
+        background-color: #3B3B3B;
+        padding: 20px;
+        border-radius: 5;
+        box-shadow: 2px 4px 4px 2px rgba(0, 0, 0, 0.25);
+        width: 314px;
 
-        .cardTitle{
-          font-size: $medium;
-          font-weight: 500;
-          color: white;
+
+
+        .cardInfo {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+
+          .cardTitle {
+            font-size: $medium;
+            font-weight: 500;
+            color: white;
+          }
+
+          .cardPrice {
+            font-size: $small;
+            font-weight: 300;
+            color: rgb(116, 116, 116);
+          }
+
+          .cardButton {
+            border-color: rgb(255, 255, 255);
+            color: white;
+            background-color: none;
+            background-color: transparent;
+            border-style: none;
+            border: 1px solid;
+            padding: 0.5rem 1rem;
+            width: 150px;
+            font-size: $small;
+          }
         }
 
-        .cardPrice{
-          font-size: $small;
-          font-weight: 300;
-          color: rgb(116, 116, 116);
-        }
-
-        .cardButton{
-          border-color: rgb(255, 255, 255);
-          color: white;
-          background-color: none;
-          background-color: transparent;
-          border-style: none;
-          border: 1px solid;
-          padding: 0.5rem 1rem;
-          width: 150px;
-          font-size: $small;
-        }
       }
-      
-     }.card:hover {
-      background-color: $maincolor;
-      transition: all 0.8s ease-in-out;
-      scale: 1.01;
-     }
 
-  
-  }
+      .card:hover {
+        background-color: $maincolor;
+        transition: all 0.8s ease-in-out;
+        scale: 1.01;
+      }
 
-  .booknow {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 50px;
 
-    img {
-      width: 20px;
-      height: 20px;
+    }
+
+    .booknow {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-top: 50px;
+
+      img {
+        width: 20px;
+        height: 20px;
+      }
     }
   }
+
 }
