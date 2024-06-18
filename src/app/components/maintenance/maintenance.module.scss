@@ -1,0 +1,170 @@
+@import "@/app/styles/styling.module.scss";
+
+
+.maintenance {
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/maintenance.jpg');
+  height: 100vh;
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  color: white;
+
+
+
+
+  .maintenanceText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
+    margin: 0 150px;
+
+
+
+
+    p {
+      font-size: $medium;
+      font-family: $font;
+      font-weight: 100;
+      text-align: center;
+    }
+
+
+    h1 {
+      font-size: 4rem;
+      font-family: $font;
+      font-weight: 100;
+      margin-bottom: 0;
+      margin-top: 0;
+      text-align: center;
+
+
+
+
+      span:first-child {
+        color: $maincolor;
+      }
+
+      span:last-child {
+        color: $maincolor;
+      }
+    }
+
+
+    .socials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+
+
+
+
+      .socialslinks {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+
+        font-weight: 400;
+        flex: 1;
+        width: auto;
+
+
+        img {
+          width: 20px;
+          margin-right: 10px;
+        }
+
+        a {
+          color: white;
+          text-decoration: none;
+          transition: 0.5s ease-in-out;
+          cursor: pointer;
+          flex: 1;
+          font-family: $font;
+        }
+
+        & :hover {
+          color: $maincolor;
+        }
+      }
+
+    }
+  }
+}
+
+
+@include respond-to("tablet") {
+  .maintenance {
+    .maintenanceText {
+      margin: 0 70px;
+
+      h1 {
+        font-size: 3rem;
+        margin-top: 20px;
+      }
+
+      p {
+        font-size: 20px;
+      }
+
+      .socials {
+        gap: 10px;
+
+        .socialslinks {
+          img {
+            width: 15px;
+          }
+
+          a {
+            font-size: 13px;
+          }
+        }
+      }
+
+    }
+  }
+}
+
+@include respond-to("phone") {
+  .maintenance {
+    .maintenanceText {
+      margin: 0 50px;
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+@include respond-to("phonexs") {
+  .maintenance {
+    .maintenanceText {
+      gap: 5px;
+      margin: 0 20px;
+
+      h1 {
+        font-size: 1.4rem;
+
+      }
+
+      p {
+        font-size: 12px;
+      }
+
+      .socials {
+        display: flex;
+        flex-direction: column;
+
+
+      }
+
+
+    }
+  }
+}

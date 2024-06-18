@@ -2,7 +2,6 @@
 
 import styles from "./collage.module.scss";
 import Image from "next/image";
-import FsLightbox from "fslightbox-react";
 import { useState } from "react";
 
 // new links for images

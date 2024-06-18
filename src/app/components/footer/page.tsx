@@ -9,7 +9,7 @@ export default function Footer() {
       <div className={styles.footerContent}>
         <div className={styles.logo}> <Image src="/footer.svg" alt="logo" width={170} height={170} /></div>
 
-        <div className={styles.slogan}><h1>Let’s capture and cherish<br/>your moments forever, <span>Book now!</span></h1></div>
+        <div className={styles.slogan}><h1>Let&apos;s capture and cherish<br/>your moments forever, <span>Book now!</span></h1></div>
 
         <div className={styles.footerLinksContainer}>
 
@@ -30,9 +30,9 @@ export default function Footer() {
             <Image src="/instagram.svg" alt="logo" width={20} height={20} /><a href='https://www.instagram.com/jaysonchua_/'>Instagram</a>
           </div>
 
-          <div className={styles.links}>
+          {/* <div className={styles.links}>
             <Image src="/messenger.svg" alt="logo" width={20} height={20} /><a href='https://www.m.me/jayson.chua.750'>Messenger</a>
-          </div>
+          </div> */}
 
         </div>
         <p>© 2024 AJC Media. All rights reserved.</p>
