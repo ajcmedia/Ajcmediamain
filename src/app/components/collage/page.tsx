@@ -2,7 +2,6 @@
 
 import styles from "./collage.module.scss";
 import Image from "next/image";
-import { useState } from "react";
 
 // new links for images
 
@@ -72,37 +71,9 @@ const cars2 = [
 
 
 export default function Collage() {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [toggler, setToggler] = useState<boolean>(false);
-  const [lightboxController, setLightboxController] = useState({
-    toggler: false,
-    slide: 1
-  })
-
-  const allImages = [...portrait1, portrait2, ...couples, ...cars1, ...cars2];
-
-  const handleClick = (index: number) => {
-    setActiveIndex(index === activeIndex ? null : index);
-    setToggler(!toggler);
-    openLightboxSlide(index + 1);
-    console.log(index)
-  }
-
-  const openLightboxSlide = (num: number) => {
-    setLightboxController({
-      toggler: !lightboxController.toggler,
-      slide: num
-    });
-  }
-
 
   return (
     <section className={styles.container}>
-      <FsLightbox
-        toggler={toggler}
-        slide={lightboxController.slide}
-        sources={allImages}
-      />
       <div className={styles.portrait}>
         {portrait1 &&
           portrait1.map((p, id) => (

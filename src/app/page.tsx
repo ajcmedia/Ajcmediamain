@@ -1,4 +1,4 @@
-import Image from "next/image";
+
 import Navbar from "@/app/components/navbar/page";
 import styles from "@/app/home.module.scss"
 import Footer from "@/app/components/footer/page";
