@@ -6,7 +6,7 @@ export default function Maintenance() {
     <section className={styles.maintenance}>
       <div className={styles.maintenanceText}>
         <Image width={150} height={150} src="/logo1.svg" alt="logo" />
-        <h1>AJC media will be <span>up</span> and <span>running</span> before you know it!</h1>
+        <h1>AJC Media will be <span>up</span> and <span>running</span> before you know it!</h1>
         <p>We are currently going through a maintenance. If you have any concerns regarding sessions, rates and more feel free to reach out.</p>
         <div className={styles.socials}>
           <div className={styles.socialslinks}><Image width={30} height={30} src="/phone.svg" alt="phone" /><a href="#">778 - 883 - 4378</a> </div>
