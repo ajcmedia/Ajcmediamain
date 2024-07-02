@@ -8,7 +8,7 @@ import Form from "./components/form/page";
 
 export default function Home() {
   return (
-    <main className={styles.landingContainer}>
+    <main className={styles.MainContainer}>
 
       {/* <div className={styles.landingContainer2}>
          <Navbar />
@@ -44,8 +44,14 @@ export default function Home() {
         <Footer />
       </div> */}
 
-     
-        <Navbar />
+
+      <div className={styles.MainContainer2}>
+        <div className={styles.NameContent}>
+          <h1>My name is Jayson I&apos;m a <span>Photographer</span></h1>
+          <p>As a Photographer based in Vancouver I wanted to enhance my skills by sharing what I&apos;m capable of to others</p>
+        </div>
+
+      </div>
 
     </main>
   );
