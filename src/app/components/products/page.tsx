@@ -6,7 +6,7 @@ import Image from "next/image"
 export default function Products() {
   return (
     <main className={styles.mainProductContainer}>
-      <div className={styles.contentProductContainer}>
+      {/* <div className={styles.contentProductContainer}>
         <h1>Products</h1>
         <p>These are the things that are available within availing the <span>photoshoot sessions</span> and also additional products that can be purchased separately </p>
         <div className={styles.productCards}>
@@ -47,6 +47,52 @@ export default function Products() {
         <div className={styles.booknow}>
         <p>What are you waiting for? Book now</p>
         <Image src="/down.svg" alt="logo" width={50} height={50} />
+        </div>
+      </div> */}
+
+      <div className={styles.contentProductContainer}>
+        <div className={styles.ProductHeader}>
+          <h1>Products</h1>
+          <p>These are the things that are available within availing the <span>photoshoot sessions</span> and also <span>additional products</span> that can be purchased separately </p>
+        </div>
+        <div className={styles.productCards}>
+          <div className={styles.card}>
+            <Image
+              width={50}
+              height={50}
+              src="/digital.svg"
+              alt="logo"
+              className={styles.productimage}
+            />
+            <h2>Digital Pictures</h2>
+            <p>Digital pictures are included with the session, editted pictures which you would choose will be sent to you.</p>
+          </div>
+          <div className={styles.card}>
+            <Image
+              width={50}
+              height={50}
+              src="/printer.svg"
+              alt="logo"
+              className={styles.productimage}
+            />
+            <h2>Printed Pictures</h2>
+            <p>Pictures taken by me will be available as a separate purchase, ranging from various sizes of your liking.</p>
+          </div>
+          <div className={styles.card}>
+            <Image
+              width={50}
+              height={50}
+              src="/album.svg"
+              alt="logo"
+              className={styles.productimage}
+            />
+            <h2>Photo Albums</h2>
+            <p>I can provide photo albums for my clients as a separate part of the package if they want to avail.</p>
+          </div>
+        </div>
+        <div className={styles.booknow}>
+          <p>What are you waiting for? Book now</p>
+          <Image src="/down.svg" alt="logo" width={50} height={50} />
         </div>
       </div>
 

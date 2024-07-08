@@ -48,11 +48,18 @@ export default function Home() {
       <div className={styles.MainContainer2}>
         <div className={styles.NameContent}>
           <h1>My name is Jayson I&apos;m a <span>Photographer</span></h1>
+          {/* <h1>Welcome to <span>AJC Media</span></h1> */}
           <p>As a Photographer based in Vancouver I wanted to enhance my skills by sharing what I&apos;m capable of to others</p>
         </div>
-
       </div>
 
+      <div className={styles.CollageContainer}>
+        <div></div>
+      </div>
+
+      <div className={styles.ProductContainer}>
+          <Products />
+      </div>
     </main>
   );
 }
