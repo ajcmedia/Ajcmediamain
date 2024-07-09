@@ -2,7 +2,7 @@
 
 
 .mainProductContainer {
-  
+
   .contentProductContainer {
     display: flex;
     flex-direction: column;
@@ -35,7 +35,7 @@
         width: 400px;
 
         h2 {
-          font-size: 1.5rem;
+          font-size: 1.2rem;
           font-weight: 500;
           color: white;
         }
@@ -61,23 +61,24 @@
       align-items: center;
       gap: 20px;
       padding-top: 20px;
+      padding-bottom: 20px;
       color: white;
 
       p {
         font-size: 0.9rem;
         font-weight: 300;
-        color: rgb(218, 218, 218); 
-        
+        color: rgb(218, 218, 218);
+
         &:hover {
-        color: $maincolor;
-        transition: all 0.4s ease-in-out;
-        scale: 1.01;
-        cursor: pointer;
+          color: $maincolor;
+          transition: all 0.4s ease-in-out;
+          scale: 1.01;
+          cursor: pointer;
+        }
+
       }
 
-      } 
 
-    
       img {
         width: 20px;
         height: 20px;
@@ -98,6 +99,7 @@
           font-size: 0.8rem;
         }
       }
+
       .productCards {
         .card {
           width: 100%;
@@ -111,7 +113,13 @@
           }
         }
       }
-    }
-  }
 
+      .booknow {
+        p {
+          font-size: 0.7rem;
+        }
+      }
+    }
+
+  }
 }

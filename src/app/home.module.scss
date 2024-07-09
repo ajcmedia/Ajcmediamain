@@ -1,137 +1,6 @@
 @import "@/app/styles/styling.module.scss";
 
 
-
-// .landingContainer {
-//   width: 100%;
-//   display: flex;
-//   flex-direction: column;
-//   align-items: center;
-
-//   .landingContainer2 {
-
-
-
-//     .landingBanner {
-//       background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/Kitsilano.jpg');
-//       background-size: cover;
-//       background-position: center;
-//       color: white;
-//       display: flex;
-//       flex-direction: column;
-//       height: 400px;
-//       box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-
-
-//     }
-
-//     .collageMain {
-//       display: flex;
-//       justify-content: center;
-
-
-//       .collageMain2 {
-//         display: flex;
-//         flex-direction: column;
-//         margin: $margins;
-//         color: white;
-//         text-align: center;
-//         font-family: $font;
-//         gap: 20px;
-
-//         span {
-//           color: $maincolor;
-//         }
-
-
-//         >p:nth-child(3) {
-//           font-size: $medium;
-//           font-weight: 300;
-//           color: rgb(116, 116, 116);
-//           letter-spacing: 6.11px;
-
-//         }
-//       }
-//     }
-
-//     .productMain {
-//       background-color: #3B3B3B;
-
-//       .productMain2 {
-//         display: flex;
-//         flex-direction: column;
-//         margin: $margins;
-//         color: white;
-//         font-family: $font;
-//         gap: 20px;
-//         padding-top: 20px;
-//         padding-bottom: 40px;
-
-//         span {
-//           color: $maincolor;
-//         }
-
-//       }
-//     }
-
-//     .contentsMain {
-
-//       display: flex;
-//       flex-direction: column;
-//       text-align: center;
-//       justify-content: center;
-//       align-items: center;
-//       font-size: $medium;
-//       font-family: $font;
-//       font-weight: 300;
-//       height: 100%;
-
-
-//       h1 {
-//         color: white;
-//         font-size: 3rem;
-//         margin-bottom: 1rem;
-//       }
-
-
-//       span {
-//         color: $maincolor;
-//       }
-
-
-//     }
-//   }
-// }
-
-
-// @include respond-to("tablet") {
-//   .landingContainer {
-//     .landingBanner {
-//       height: 100vh;
-//     }
-
-//     .collageMain {
-//       .collageMain2 {
-//         font-size: $medium;
-//       }
-//     }
-
-//     .productMain {
-//       .productMain2 {
-//         font-size: $medium;
-//       }
-//     }
-
-//     .contentsMain {
-//       h1 {
-//         font-size: 2rem;
-//       }
-//     }
-//   }
-
-// }
-
-
 .MainContainer {
   display: flex;
   flex-direction: column;
@@ -183,14 +52,18 @@
     width: calc(100% - 15px);
     max-width: 1400px;
     align-self: center;
-    margin: 0 15px;
+    margin: 0 10px;
+
 
 
     h1 {
-      font-size: 2.5rem;
+      font-size: 2rem;
       margin-bottom: 1rem;
-      font-weight: 500;
+      font-weight: 400;
+    }
 
+    p {
+      font-weight: 200;
     }
   }
 }

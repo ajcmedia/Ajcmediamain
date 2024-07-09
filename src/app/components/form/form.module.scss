@@ -2,91 +2,109 @@
 
 
 .mainFormContainer {
+  display: flex;
+  flex-direction: column;
 
-  .mainFormContainer2 {
+  .formContainer {
     display: flex;
-    flex-direction: row;
-    margin: $margins;
-  
+    flex-direction: column;
+    background-color: #272626;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.25);
 
 
-    .leftText {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      
-
+    .formHeader {
+      align-self: center;
+      align-items: center;
       color: white;
+      width: calc(100% - 25px);
+      max-width: 800px;
+
 
       h1 {
-        font-size: 3rem;
-        font-family: $font;
+        font-size: 2rem;
         margin-bottom: 1rem;
-
-        span {
-          color: $maincolor;
-        }
+        font-weight: 400;
       }
 
       p {
-        font-size: $small;
-        font-family: $font;
-        margin-bottom: 1rem;
+        font-weight: 200;
+      }
+
+      span {
+        color: $maincolor;
       }
     }
 
+    .formInputs {
+      align-self: center;
+      align-items: center;
+      color: white;
+      width: calc(100% - 9px);
+      max-width: 800px;
 
-    .rightForm {
-      display: flex;
-      flex-direction: column;
-
-
-      input {
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        background-color: #3B3B3B;
-        color: white;
-        font-family: $font;
-        font-size: $small;
-        border-style: none;
-
-      }
-
-      textarea {
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        background-color: #3B3B3B;
-        color: white;
-        font-family: $font;
-        font-size: $small;
-        border-style: none;
-        resize: none;
-        height: 200px;
-        &:focus {
-          outline: none;
-        }
-      }
-
-      input:focus {
-        outline: none;
-      }
-
-      .personalInput {
+      .inputContainer {
         display: flex;
         flex-direction: row;
-        gap: 1rem;
+        justify-content: center;
+
 
         input {
+          padding: 0.5rem;
+          background-color: #3B3B3B;
+          color: white;
+          font-family: $font;
+          font-size: $small;
+          border-style: none;
           width: 100%;
+          margin: 7px 7px;
+          height: 25px;
+
+          &:focus {
+            outline: none;
+          }
         }
 
+
       }
+
+      .textAreaContainer {
+        box-sizing: border-box;
+        display: flex;
+
+
+        textarea {
+          padding: 0.5rem;
+          background-color: #3B3B3B;
+          color: white;
+          font-family: $font;
+          font-size: $small;
+          border-style: none;
+          resize: none;
+          height: 200px;
+          width: 100%;
+          margin: 7px 7px;
+
+          &:focus {
+            outline: none;
+          }
+        }
+      }
+
+
 
       .agreeBox {
         display: flex;
         flex-direction: row;
-        align-items: center;
+        justify-content: center;
+
         gap: 0.5rem;
+        color: white;
+        width: calc(100% - 9px);
+        text-align: justify;
+
 
         input {
           width: 25px;
@@ -98,8 +116,8 @@
         }
 
         label {
-          color: white;
-          font-size: $small;
+          color: rgb(167, 167, 167);
+          font-size: 0.8rem;
           font-family: $font;
         }
       }
@@ -108,6 +126,9 @@
         display: flex;
         justify-content: flex-end;
         margin-top: 1rem;
+        width: calc(100% - 9px);
+
+
 
         button {
           width: 100px;
@@ -120,11 +141,114 @@
           font-size: $small;
           border-style: none;
           cursor: pointer;
+          transition: all 0.4s ease-in-out;
+        }
+
+        :hover {
+          scale: 1.01;
+          background-color: #ff4217;
+        }
+
+
+      }
+
+    }
+
+  }
+}
+
+
+
+
+@media (max-width: 918px) {
+  .mainFormContainer {
+    .formContainer {
+      .formHeader {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 0.8rem;
+        }
+      }
+
+      .formInputs {
+        .inputContainer {
+          input {
+            font-size: 0.8rem;
+          }
+        }
+
+        .textAreaContainer {
+          textarea {
+            font-size: 0.8rem;
+          }
+        }
+
+        .agreeBox {
+
+          label {
+            font-size: 0.7rem;
+          }
+        }
+
+        .buttonDiv {
+          button {
+            font-size: 0.8rem;
+          }
         }
       }
     }
   }
-
 }
 
-;
+
+@media (max-width: 603px) {
+  .mainFormContainer {
+    .formContainer {
+      .formHeader {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 0.8rem;
+        }
+      }
+
+      .formInputs {
+        .inputContainer {
+          input {
+            font-size: 0.8rem;
+            margin: 4px 4px;
+          }
+        }
+
+        .textAreaContainer {
+          textarea {
+            font-size: 0.8rem;
+            margin: 4px 4px;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+@media (max-width: 352px) {
+  .mainFormContainer {
+    .formContainer {
+      .formHeader {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+}
