@@ -7,38 +7,55 @@
 
   .MainContainer2 {
     width: 100%;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/Kitsilano.jpg');
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/background.jpg');
     background-size: cover;
     background-position: center;
-    color: white;
     display: flex;
     flex-direction: column;
     height: 500px;
-    box-shadow: 0px 4px 0px 0px rgba(0, 0, 0, 0.25);
     justify-content: center;
     text-align: center;
+    font-family: $font;
 
-
-    .NameContent {
+    .Submaincon2 {
       display: flex;
       flex-direction: column;
       align-self: center;
       max-width: 1200px;
       margin: 0 15px;
+      align-items: center;
+      gap: 10px;
+
+      br {
+        display: none
+      }
 
 
+
+      a {
+        display: inline-block;
+        text-align: center;
+        border-radius: 3px;
+        background-color: #D00317;
+        width: 192px;
+        height: 38px;
+        line-height: 38px;
+        color: white;
+        text-decoration: none;
+        font-size: 0.8rem
+      }
 
       h1 {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+        font-size: 4rem;
+        margin-bottom: 0;
+        font-weight: 450;
+        color:white ;
       }
 
       p {
-        font-size: 1.2rem;
+        font-size: 1rem;
         font-weight: 450;
-        color: rgb(228, 228, 228);
-
+        color: #ffffff;
       }
 
       span {
@@ -47,39 +64,72 @@
     }
   }
 
-  .ProductContainer {
-    align-items: center;
-    width: calc(100% - 15px);
-    max-width: 1400px;
+  .AboutMeContainer {
     align-self: center;
-    margin: 0 10px;
+    max-width: 1440px;
+  }
+}
 
 
+@media (max-width: 741px) {
+  .MainContainer {
+    .MainContainer2 {
+   
 
+      .Submaincon2 {
+        h1 {
+          font-size: 3.5rem
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 652px) {
+  .MainContainer {
+    .MainContainer2 {
+      .Submaincon2 {
+      h1 {
+        font-size: 3rem
+      }
+      }
+    }
+  }
+}
+
+@media (max-width: 563px) {
+  .MainContainer {
+    .MainContainer2 {
+      
+      .Submaincon2 {
     h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      font-weight: 400;
+      font-size: 2.6rem
     }
-
-    p {
-      font-weight: 200;
+      }
     }
   }
 }
 
 
 
-@media (max-width: 561px) {
+@media (max-width: 491px) {
   .MainContainer {
-
-
     .MainContainer2 {
-      height: 450px;
+      text-align: left;
 
-      .NameContent {
+      .Submaincon2 {
+        br {
+          display: inline-block;
+        }
+        display: flex;
+        flex-direction: column;
+        align-self: flex-start;
+        max-width: 1200px;
+        margin: 0 15px;
+        align-items: flex-start;
+
         h1 {
-          font-size: 2rem;
+          font-size: 3rem
         }
 
         p {
@@ -91,48 +141,29 @@
 }
 
 
-@media (max-width: 420px) {
+@media (max-width: 301px) {
   .MainContainer {
-
-
     .MainContainer2 {
-      height: 450px;
-
-      .NameContent {
+      .Submaincon2 {
         h1 {
-          font-size: 1.9rem;
-        }
-
-        p {
-          font-size: 0.9rem;
+          font-size: 2.7rem;
         }
       }
     }
   }
 }
 
-@media (max-width: 366px) {
-  .MainContainer {
-    .MainContainer2 {
-      .NameContent {
-        h1 {
-          font-size: 1.7rem;
-        }
-      }
-    }
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px); /* Optional slide-up effect */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 331px) {
-  .MainContainer {
-    .MainContainer2 {
-      height: 400px;
-
-      .NameContent {
-        h1 {
-          font-size: 1.5rem;
-        }
-      }
-    }
-  }
+.MainContainer2 {
+  animation: fadeIn 1s ease-out forwards; /* Animation properties */
 }

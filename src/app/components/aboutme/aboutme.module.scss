@@ -1,0 +1,195 @@
+@import "@/app/styles/styling.module.scss";
+
+
+.aboutMainContainer {
+    font-family: $font;
+    display: flex;
+    width: auto;
+    margin: 15px;
+
+    .aboutMainContainer2 {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+
+
+        img {
+            object-fit: cover;
+        }
+
+        .aboutMeInfo {
+
+            .imageContainer {
+                img {
+                    display: none;
+                }
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            img {
+                display: none;
+            }
+
+            p {
+                color: #575757;
+                font-size: 1rem;
+                font-weight: 400;
+                line-height: 215%;
+            }
+
+            a {
+                span {
+                    color: $maincolor
+                }
+            }
+
+            .info {
+                display: flex;
+                flex-direction: column;
+                gap: 20px
+            }
+
+        }
+    }
+}
+
+
+
+@media (max-width: 1040px) {
+    .aboutMainContainer {
+        .aboutMainContainer2 {
+            .aboutMeInfo {
+                h1 {
+                    font-size: 2rem;
+                }
+
+                p {
+                    color: #575757;
+                    text-align: justify;
+                    font-size: 1rem;
+
+                    line-height: 215%;
+                }
+
+                a {
+                    span {
+                        color: $maincolor
+                    }
+                }
+
+                .info {
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 800px) {
+    .aboutMainContainer {
+        .aboutMainContainer2 {
+            img {
+                display: none
+            }
+
+            .aboutMeInfo {
+
+                .imageContainer {
+                    img {
+                        display: inline;
+                        width: 100%;
+                    }
+                }
+
+                h1 {
+                    font-size: 2.3rem;
+                }
+
+
+
+                p {
+                    color: #575757;
+                    font-size: 1rem;
+                    font-weight: 400;
+                    line-height: 215%;
+                }
+
+                a {
+                    span {
+                        color: $maincolor
+                    }
+                }
+
+                .info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px
+                }
+
+            }
+        }
+    }
+}
+
+
+
+
+@media (max-width: 490px) {
+    .aboutMainContainer {
+        .aboutMainContainer2 {
+            img {
+                display: none
+            }
+
+            .aboutMeInfo {
+                h1 {
+                    font-size: 1.5rem;
+                }
+
+                p {
+                    color: #575757;
+                    text-align: justify;
+                    font-size: 0.9rem;
+                    line-height: 215%;
+                }
+
+                a {
+                    span {
+                        color: $maincolor
+                    }
+                }
+
+                .info {
+                    display: flex;
+                    flex-direction: column;
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+}
+
+
+@media (max-width: 330px) {
+    .aboutMainContainer {
+        .aboutMainContainer2 {
+            .aboutMeInfo {
+                h1 {
+                    font-size: 1.4rem;
+                }
+
+                p {
+                    color: #575757;
+                    text-align: justify;
+                    font-size: 1rem;
+                    line-height: 215%;
+                }
+            }
+        }
+    }
+}

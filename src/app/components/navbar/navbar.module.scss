@@ -5,7 +5,11 @@
   width: auto;
   margin: 15px;
   flex-direction: column;
-  
+
+  .navleft2 {
+    display: none;
+  }
+
 
   .nav_sub_container {
     display: flex;
@@ -15,16 +19,11 @@
     max-width: 1400px;
     padding: 10px 0px 10px 0px;
 
-
-    .navleft2 {
-      display: none;
-    }
-
     .navleft,
     .navright {
       display: flex;
       align-items: center;
-      color: white;
+      color: rgb(0, 0, 0);
       font-family: $font;
       font-size: $small;
       font-weight: 500;
@@ -34,40 +33,15 @@
 
       a {
         text-decoration: none;
-        color: white;
+        color: rgb(0, 0, 0);
 
         &:hover {
           color: $maincolor;
           transition: all 0.4s ease-in-out;
         }
       }
-    } 
-
-    .socials {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 130px;
-
-      .socialLinks {
-        position: relative;
-
-        .socialshover {
-          opacity: 0;
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          transition: opacity 0.5s ease-in-out;
-        }
-
-        &:hover .socialshover {
-          opacity: 1;
-          cursor: pointer;
-        }
-      }
     }
+
 
     .navlinks {
       display: none;
@@ -75,15 +49,13 @@
       gap: 20px;
       align-items: flex-start;
       transition: opacity 0.3s ease;
+      color: white;
 
       a {
         text-decoration: none;
-        color: white;
+        color: rgb(255, 255, 255);
         font-size: $small;
 
-        &:hover {
-          color: $maincolor;
-        }
       }
     }
 
@@ -91,16 +63,23 @@
       display: none;
 
       .lines {
+
         div {
           width: 25px;
           height: 3px;
-          background-color: white;
+          background-color: rgb(0, 0, 0);
           margin: 7px;
           transition: all 0.3s ease;
         }
       }
 
       &.open {
+        .lines {
+          div {
+            background-color: white; // Change lines to white when the menu is open
+          }
+        }
+
         transform: rotate(45deg);
 
         div:nth-child(1) {
@@ -119,10 +98,17 @@
 
     .navright {
       @media (max-width: 700px) {
+     
+
+
         overflow: hidden;
         max-height: 0;
         opacity: 0;
         visibility: hidden;
+
+        .contactme {
+          display: none;
+        }
       }
 
       &.show {
@@ -141,18 +127,23 @@
     .nav_sub_container {
       align-items: center;
 
+      .logodiv {
+        display: none;
+      }
+
       .navleft {
         display: none;
       }
 
       .navleft2 {
         display: flex;
-        z-index: 1;
+        z-index: 2;
       }
 
       .hamburger {
         display: flex;
-        
+        z-index: 2;
+
       }
 
       .navright {
@@ -177,12 +168,12 @@
           left: 0;
           width: 100vw;
           height: 100vh;
-          background-color: #FF5B37;
+          background-color: #AF0314;
           max-height: 100vh;
           opacity: 1;
           visibility: visible;
           transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0s;
-         
+          z-index: 1;
         }
 
         a {
@@ -191,6 +182,7 @@
       }
 
       .navlinks {
+        
         display: flex;
         gap: 4rem;
         padding-left: 30px;
