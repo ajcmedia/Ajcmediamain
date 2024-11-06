@@ -20,8 +20,13 @@ export default function Home() {
       </div>
       <div className={styles.contentContainer}>
         <Aboutme />
-        <Form/>
+        <Form />
       </div>
+      <div className={styles.footerBackground}>
+        <Footer />
+
+      </div>
+
     </main>
   );
 }

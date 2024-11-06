@@ -49,7 +49,7 @@
         font-size: 4rem;
         margin-bottom: 0;
         font-weight: 450;
-        color:white ;
+        color: white;
       }
 
       p {
@@ -68,13 +68,20 @@
     align-self: center;
     max-width: 1440px;
   }
+
+  .footerBackground {
+    background-color: #363636;
+ display: flex;
+ justify-content: center;
+    
+  }
 }
 
 
 @media (max-width: 741px) {
   .MainContainer {
     .MainContainer2 {
-   
+
 
       .Submaincon2 {
         h1 {
@@ -89,9 +96,9 @@
   .MainContainer {
     .MainContainer2 {
       .Submaincon2 {
-      h1 {
-        font-size: 3rem
-      }
+        h1 {
+          font-size: 3rem
+        }
       }
     }
   }
@@ -100,11 +107,11 @@
 @media (max-width: 563px) {
   .MainContainer {
     .MainContainer2 {
-      
+
       .Submaincon2 {
-    h1 {
-      font-size: 2.6rem
-    }
+        h1 {
+          font-size: 2.6rem
+        }
       }
     }
   }
@@ -121,6 +128,7 @@
         br {
           display: inline-block;
         }
+
         display: flex;
         flex-direction: column;
         align-self: flex-start;
@@ -156,8 +164,10 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: translateY(20px); /* Optional slide-up effect */
+    transform: translateY(20px);
+    /* Optional slide-up effect */
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -165,5 +175,6 @@
 }
 
 .MainContainer2 {
-  animation: fadeIn 1s ease-out forwards; /* Animation properties */
+  animation: fadeIn 1s ease-out forwards;
+  /* Animation properties */
 }

@@ -6,36 +6,48 @@ import Image from "next/image"
 export default function Footer() {
   return (
     <main className={styles.mainFooterContainer}>
-      <div className={styles.footerContent}>
-        <div className={styles.logo}> <Image src="/footer.svg" alt="logo" width={170} height={170} /></div>
-
-        <div className={styles.slogan}><h1>Let&apos;s capture and cherish<br/>your moments forever, <span>Book now!</span></h1></div>
-
-        <div className={styles.footerLinksContainer}>
-
-          <div className={styles.links}>
-            <Image src="/mail.svg" alt="logo" width={20} height={20} /><a>Inquire@ajcmedia.ca</a>
-          </div>
-
-          <div className={styles.links}>
-            <Image src="/phone.svg" alt="logo" width={20} height={20} /><a>(778) - 883 - 4378</a>
-          </div>
-
-
-          <div className={styles.links}>
-            <Image src="/facebook.svg" alt="logo" width={20} height={30} /><a href='https://www.facebook.com/JayCphotography88'>Facebook</a>
-          </div>
-
-          <div className={styles.links}>
-            <Image src="/instagram.svg" alt="logo" width={20} height={20} /><a href='https://www.instagram.com/jaysonchua_/'>Instagram</a>
-          </div>
-
-          {/* <div className={styles.links}>
-            <Image src="/messenger.svg" alt="logo" width={20} height={20} /><a href='https://www.m.me/jayson.chua.750'>Messenger</a>
-          </div> */}
-
+      <Image
+        src={"/logo2.svg"}
+        alt="logo"
+        width={120}
+        height={50}
+        className={styles.logosmall}
+      />
+      <p>Connect with me on other platforms to stay updated on my latest projects, see behind-the-scenes moments, and explore more of my creative journey</p>
+      <div className={styles.Links}>
+        <div className={styles.socialLinks}>
+          <a href="https://www.facebook.com/JayCphotography88">  <Image
+            src={"/facebook.svg"}
+            alt="fb"
+            width={20}
+            height={20}
+            className={styles.logosmall}
+          /></a>
+          <a href="https://www.instagram.com/ajcmedia.ca/"> <Image
+            src={"/instagram.svg"}
+            alt="ig"
+            width={20}
+            height={20}
+            className={styles.logosmall}
+          /></a>
+          <a href='https://www.m.me/jayson.chua.750'>
+            <Image
+              src={"/messenger.svg"}
+              alt="ms"
+              width={20}
+              height={20}
+              className={styles.logosmall}
+            /></a></div>
+        <div className={styles.quickLinks}>
+          {/* <a href="#">About</a>
+          <a href="#">Services</a>
+          <a href="#">Products</a> */}<p>Copyright 2023 Ajc Media , Vancouver BC</p>
         </div>
-        <p>© 2024 AJC Media. All rights reserved.</p>
+
+
+      </div>
+      <div className={styles.copyright}>
+        <p>Copyright 2023 Ajc Media , Vancouver BC</p>
       </div>
     </main>
   )
