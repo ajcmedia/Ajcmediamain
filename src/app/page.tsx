@@ -5,7 +5,8 @@ import styles from "@/app/home.module.scss"
 import Footer from "@/app/components/footer/page";
 import Collage from "./components/collage/page";
 import Products from "./components/products/page";
-import Aboutme from "./components/aboutme/page";
+import Aboutme from "@/app/components/aboutme/page";
+import Form from "@/app/components/form/page"
 
 export default function Home() {
   return (
@@ -13,12 +14,13 @@ export default function Home() {
       <div className={styles.MainContainer2}>
         <div className={styles.Submaincon2}>
           <h1>Welcome to <br></br>AJC media</h1>
-          <p>Discover captivating Images showcasing the beauty of <span>Vancouver</span> life. From birthdays to baby showers, each moment is expertly captured for timeless memories. Let's create something unforgettable together!</p>
+          <p>Discover captivating Images showcasing the beauty of <span>Vancouver</span> life. From birthdays to baby showers, each moment is expertly captured for timeless memories. Let&apos;s create something unforgettable together!</p>
           <a href="#">Book a session now!</a>
         </div>
       </div>
-      <div className={styles.AboutMeContainer}>
+      <div className={styles.contentContainer}>
         <Aboutme />
+        <Form/>
       </div>
     </main>
   );
