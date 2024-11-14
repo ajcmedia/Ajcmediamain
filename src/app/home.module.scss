@@ -59,7 +59,7 @@
       }
 
       span {
-        color: $maincolor;
+        color: rgb(255, 54, 71);
       }
     }
   }
@@ -69,11 +69,23 @@
     max-width: 1440px;
   }
 
+  .formContainer {
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid rgb(224, 224, 224);
+    .formContainer2 {
+      align-self: center;
+      max-width: 1440px;
+      margin: 20px 0 20px 0;
+    }
+
+  }
+
   .footerBackground {
     background-color: #363636;
- display: flex;
- justify-content: center;
-    
+    display: flex;
+    justify-content: center;
+
   }
 }
 

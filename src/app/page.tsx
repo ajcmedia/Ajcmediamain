@@ -7,6 +7,8 @@ import Collage from "./components/collage/page";
 import Products from "./components/products/page";
 import Aboutme from "@/app/components/aboutme/page";
 import Form from "@/app/components/form/page"
+import Carousel from "@/app/components/carousel/page";
+
 
 export default function Home() {
   return (
@@ -18,9 +20,15 @@ export default function Home() {
           <a href="#">Book a session now!</a>
         </div>
       </div>
+      <Carousel />
+
       <div className={styles.contentContainer}>
         <Aboutme />
-        <Form />
+
+      </div>
+      <div className={styles.formContainer}>
+        <div className={styles.formContainer2}> <Form /></div>
+
       </div>
       <div className={styles.footerBackground}>
         <Footer />

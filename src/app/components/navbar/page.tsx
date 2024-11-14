@@ -50,7 +50,7 @@ export default function Navbar() {
         <div className={styles.navleft}>
           <a href="#">About</a>
           <a href="#">Services</a>
-          <a href="#">Products</a>
+          <a href="product">Products</a>
         </div>
 
         <div className={`${styles.navright} ${isOpen ? styles.show : ""}`}>
