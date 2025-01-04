@@ -7,7 +7,8 @@ import Collage from "./components/collage/page";
 import Products from "./components/products/page";
 import Aboutme from "@/app/components/aboutme/page";
 import Form from "@/app/components/form/page"
-import Carousel from "@/app/components/carousel/page";
+import Carousel from "./components/carousel/page";
+
 
 
 export default function Home() {
@@ -20,7 +21,12 @@ export default function Home() {
           <a href="#">Book a session now!</a>
         </div>
       </div>
-      <Carousel />
+
+      
+      <div className={styles.contentContainer}>
+ <Carousel />
+      </div>
+
 
       <div className={styles.contentContainer}>
         <Aboutme />

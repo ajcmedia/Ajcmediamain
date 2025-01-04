@@ -8,7 +8,7 @@ export default function Form() {
     <main className={styles.mainFormContainer}>
       <div className={styles.formText}>
         <h1>Get in touch</h1>
-        <p>If you have any additional questions about my rates, need more image samples, or would like to discuss a personalized photography package, please don’t hesitate to reach out.Leave me a message!</p>
+        <p>If you have any additional questions about my rates, need more image samples, or would like to discuss a personalized photography package, please dont hesitate to reach out. Leave me a message!</p>
       </div>
       <div className={styles.formContainer}>
         <div className={styles.inputDiv}>

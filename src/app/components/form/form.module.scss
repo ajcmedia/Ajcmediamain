@@ -40,6 +40,7 @@
       border: 1px solid #C8C8C8;
       border-radius: 7px;
       width: 100%;
+      font-family: $font
     }
 
     .input1 {
@@ -145,10 +146,16 @@
     }
 
     .formContainer {
-      
+      gap: 10px;
+
+      input {
+        font-size: 12px;
+      }
       @mixin sharedInputStyle {
-        background-size: 15px;
+        background-size: 13px;
         padding-left: 8%;
+        
+
       }
       .input1 {
         @include sharedInputStyle;
@@ -161,6 +168,7 @@
       .input3 {
         @include sharedInputStyle;
       }
+
   
       .checkboxContainer {
         font-size: 0.8rem;
