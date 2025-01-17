@@ -5,7 +5,8 @@
     font-family: $font;
     display: flex;
     width: auto;
-    margin: 15px;
+    padding: 15px;
+
 
     .aboutMainContainer2 {
         display: flex;
@@ -65,6 +66,7 @@
 
 @media (max-width: 1040px) {
     .aboutMainContainer {
+
         .aboutMainContainer2 {
             .aboutMeInfo {
                 h1 {
@@ -72,7 +74,7 @@
                 }
 
                 p {
-                    
+
                     font-size: 1rem;
 
                     line-height: 215%;
@@ -185,7 +187,7 @@
 
                 p {
                     color: #575757;
-                  
+
                     line-height: 215%;
                 }
             }

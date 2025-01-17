@@ -19,11 +19,11 @@ export default function Home() {
         </div>
       </div>
 
-      
-      <div className={styles.contentContainer}>
- <Carousel />
-      </div>
 
+      <div className={styles.contentContainer}>
+
+      </div>
+      <Carousel />
 
       <div className={styles.contentContainer}>
         <Aboutme />
