@@ -1,10 +1,7 @@
 
 
-import Navbar from "@/app/components/navbar/page";
 import styles from "@/app/home.module.scss"
 import Footer from "@/app/components/footer/page";
-import Collage from "./components/collage/page";
-import Products from "./components/products/page";
 import Aboutme from "@/app/components/aboutme/page";
 import Form from "@/app/components/form/page"
 import Carousel from "./components/carousel/page";
