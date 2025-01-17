@@ -36,14 +36,15 @@ export default function Carousel() {
     <main className={styles.carouselContainer}>
       <div className={styles.carousel}>
         {displayedImages.map((image, index) => (
-   
-            <Image src={image} alt={`carousel-${index}`} className={styles.carouselImage} width={300} height={1000} key={index}/>
-   
+
+          <Image src={image} alt={`carousel-${index}`} className={styles.carouselImage} width={300} height={1000} key={index} />
+
         ))}
       </div>
       <div className={styles.buttonDiv}>
-        <button onClick={handleNext} className={styles.carouselButton}>&lt;</button> 
-        <button onClick={handlePrevious} className={styles.carouselButton}>&gt;</button>  
+
+        <button onClick={handlePrevious} className={styles.carouselButton}>&lt;</button>
+        <button onClick={handleNext} className={styles.carouselButton}>&gt;</button>
       </div>
     </main>
   );
