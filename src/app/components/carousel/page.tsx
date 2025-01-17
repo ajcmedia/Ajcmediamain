@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import styles from "./carousel.module.scss";
 
 const images = [
-  'image1.jpg',
-  'kitsilano.jpg',
-  'image1.jpg',
-  'image1.jpg',
-  'image1.jpg',
-  'image1.jpg'
+  'image1.png',
+  'image3.png',
+  'image2.png',
+  'image4.png',
+  'image5.png',
+  'image6.png'
 ];
 
 export default function Carousel() {
@@ -17,6 +17,10 @@ export default function Carousel() {
   const handleNext = () => {
     setStartIndex((prevIndex) => (prevIndex + 1) % images.length);
   };
+
+  const handlePrevious = () => {
+    setStartIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : images.length - 1));
+  }
 
   const displayedImages = [
     images[startIndex],
@@ -28,10 +32,15 @@ export default function Carousel() {
     <main className={styles.carouselContainer}>
       <div className={styles.carousel}>
         {displayedImages.map((image, index) => (
-          <img key={index} src={image} alt={`carousel-${index}`} className={styles.carouselImage} />
+          <div className={styles.imageContainer} key={index}>
+            <img  src={image} alt={`carousel-${index}`} className={styles.carouselImage} />
+          </div>
         ))}
       </div>
+      <div className={styles.buttonDiv}>
+      <button onClick={handlePrevious} className={styles.carouselButton2}>Prev</button>  
       <button onClick={handleNext} className={styles.carouselButton}>Next</button>
+      </div>
     </main>
   );
 }
