@@ -1,6 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import styles from "./carousel.module.scss";
+import Image from 'next/image';
 
 const images = [
   'image1.png',
@@ -33,7 +34,7 @@ export default function Carousel() {
       <div className={styles.carousel}>
         {displayedImages.map((image, index) => (
           <div className={styles.imageContainer} key={index}>
-            <img  src={image} alt={`carousel-${index}`} className={styles.carouselImage} />
+            <Image  src={image} alt={`carousel-${index}`} className={styles.carouselImage} />
           </div>
         ))}
       </div>
