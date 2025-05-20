@@ -15,9 +15,12 @@ export default function Aboutme() {
                         <a><span>&#124;</span> Doing photography since 2022 </a>
                         <a><span>&#124;</span> Efficient in editing using Adobe photoshop </a>
                         <a><span>&#124;</span> Videographer partner for events </a>
+                       
                     </div>
                 </div>
             </div>
         </section>
     );
 }
+
+// This is a test push
