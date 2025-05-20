@@ -9,7 +9,8 @@ const images = [
   '/image2.png',
   '/image4.png',
   '/image5.png',
-  '/image6.png'
+  '/image6.png',
+
 ];
 
 export default function Carousel() {
@@ -30,6 +31,7 @@ export default function Carousel() {
     images[(startIndex + 3) % images.length],
     images[(startIndex + 4) % images.length],
     images[(startIndex + 5) % images.length],
+
   ];
 
   return (
