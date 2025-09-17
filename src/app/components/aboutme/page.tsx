@@ -7,7 +7,7 @@ export default function Aboutme() {
             <div className={styles.aboutMainContainer2}>
                 <Image width={500} height={500} src="/image1.jpg" alt="myImage" />
                 <div className={styles.aboutMeInfo}>
-                    <h1>My name is Jayson Chua<br></br>
+                    <h1>My name is Jayson<br></br>
                         freelance Photographer</h1>
                     <div className={styles.imageContainer}><Image width={500} height={500} src="/image1.jpg" alt="myImage" /></div>
                     <p>As a freelance photographer based in Vancouver, originally from the Philippines, I focus on capturing meaningful moments with creativity and empathy. While specializing in portraits, I also cover events like baby showers, gender reveals, birthdays, and weddings, which inspire me to capture cherished memories. My work is driven by a passion for storytelling through photography</p>
