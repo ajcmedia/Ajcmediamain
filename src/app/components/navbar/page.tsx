@@ -18,7 +18,7 @@ export default function Navbar() {
       document.body.style.overflow = "auto";
     }
 
-    // Cleanup function to reset the style
+    // Cleanup
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -28,7 +28,6 @@ export default function Navbar() {
     <main className={styles.navcontainer}>
       <div className={styles.nav_sub_container}>
         <div className={styles.navleft2}>
-          {/* Conditionally change the logo based on whether the menu is open */}
           <Image
             src={isOpen ? "/logo2.svg" : "/logo1.svg"}
             alt="logo"
@@ -53,16 +52,24 @@ export default function Navbar() {
           <a href="product">Products</a>
         </div>
 
+        {/* Mobile nav */}
         <div className={`${styles.navright} ${isOpen ? styles.show : ""}`}>
-          <div className={`${styles.navlinks}`}>
-            <a href="#">About</a>
-            <a href="#">Services</a>
-            <a href="#">Products</a>
-            <a href="#">Contact me</a>
+          <div className={styles.navlinks}>
+            <a href="#" onClick={() => setIsOpen(false)}>About</a>
+            <a href="#" onClick={() => setIsOpen(false)}>Services</a>
+            <a href="product" onClick={() => setIsOpen(false)}>Products</a>
+            <a href="#form" onClick={() => setIsOpen(false)}>Contact me</a>
           </div>
-          <a href="#" className={styles.contactme}>Contact me</a>
+          <a 
+            href="#form" 
+            className={styles.contactme} 
+            onClick={() => setIsOpen(false)}
+          >
+            Contact me
+          </a>
         </div>
 
+        {/* Hamburger */}
         <div
           className={`${styles.hamburger} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
