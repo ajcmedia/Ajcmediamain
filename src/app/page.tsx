@@ -26,7 +26,7 @@ export default function Home() {
       </div>
       <Carousel />
 
-      <div className={styles.contentContainer}>
+      <div className={styles.contentContainer} id="about">
         <Aboutme />
 
       </div>

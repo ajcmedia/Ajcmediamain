@@ -47,16 +47,16 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navleft}>
-          <a href="#">About</a>
-          <a href="#">Services</a>
+          <a href="#about">About</a>
+          <a href="#form">Services</a>
           <a href="product">Products</a>
         </div>
 
         {/* Mobile nav */}
         <div className={`${styles.navright} ${isOpen ? styles.show : ""}`}>
           <div className={styles.navlinks}>
-            <a href="#" onClick={() => setIsOpen(false)}>About</a>
-            <a href="#" onClick={() => setIsOpen(false)}>Services</a>
+            <a href="#about" onClick={() => setIsOpen(false)}>About</a>
+            <a href="#form" onClick={() => setIsOpen(false)}>Services</a>
             <a href="product" onClick={() => setIsOpen(false)}>Products</a>
             <a href="#form" onClick={() => setIsOpen(false)}>Contact me</a>
           </div>
