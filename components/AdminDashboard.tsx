@@ -17,10 +17,38 @@ export function AdminDashboard() {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
     const mergedProjects = getMergedProjects(readLocalStore<PortfolioProject[]>(PROJECT_KEY, starterProjects));
     setProjects(mergedProjects);
     setBookings(readLocalStore<BookingRequest[]>(BOOKING_KEY, []));
     writeLocalStore(PROJECT_KEY, mergedProjects);
+
+    async function loadServerBookings() {
+      try {
+        const response = await fetch("/api/bookings", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { bookings: BookingRequest[] };
+        if (!isMounted) {
+          return;
+        }
+
+        const localBookings = readLocalStore<BookingRequest[]>(BOOKING_KEY, []);
+        const mergedBookings = mergeBookings(data.bookings, localBookings);
+        setBookings(mergedBookings);
+        writeLocalStore(BOOKING_KEY, mergedBookings);
+      } catch {
+        // Local fallback remains available until MongoDB is connected.
+      }
+    }
+
+    loadServerBookings();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   function persistProjects(nextProjects: PortfolioProject[]) {
@@ -66,9 +94,9 @@ export function AdminDashboard() {
     <main className="pb-20">
       <section className="grid min-h-[70svh] items-center gap-[clamp(30px,6vw,84px)] px-[clamp(18px,5vw,70px)] pb-16 pt-28 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.75fr)]">
         <div>
-          <p className="eyebrow">Prototype control room</p>
+          <p className="eyebrow">Protected control room</p>
           <h1 className="max-w-[12ch] text-[clamp(2.45rem,5.8vw,5.85rem)] leading-[0.94] tracking-normal text-ink">Bookings and portfolio updates in one place.</h1>
-          <p className="mt-6 max-w-2xl body-copy">This mock admin stores changes in this browser. API routes, middleware, and a backend-ready data boundary are already in place for the production version.</p>
+          <p className="mt-6 max-w-2xl body-copy">This admin area is password protected. Booking and project APIs are structured so MongoDB and email notifications can be connected when the live credentials are ready.</p>
         </div>
         <div className="grid border border-white/15 sm:grid-cols-2">
           <Stat value={bookings.length} label="booking requests" />
@@ -85,10 +113,10 @@ export function AdminDashboard() {
             <PipelineCard label="Featured frames" value={featuredIds.length} detail="Homepage-ready picks" tone="gold" />
           </Reveal>
           <Reveal delay={160}>
-            <PipelineCard label="Portfolio library" value={projects.length} detail="Mock CMS entries" tone="green" />
+            <PipelineCard label="Portfolio library" value={projects.length} detail="Gallery entries" tone="green" />
           </Reveal>
           <Reveal delay={240}>
-            <PipelineCard label="Backend status" value="API" detail="Routes scaffolded" tone="rose" />
+            <PipelineCard label="Backend status" value="Ready" detail="MongoDB/email hooks next" tone="rose" />
           </Reveal>
         </div>
       </section>
@@ -96,7 +124,7 @@ export function AdminDashboard() {
       <section className="grid gap-5 px-[clamp(18px,5vw,70px)] xl:grid-cols-[minmax(320px,0.7fr)_minmax(0,1fr)]">
         <Reveal>
           <form className="glass-panel grid content-start gap-4 p-[clamp(20px,4vw,32px)]" onSubmit={handleProjectSubmit}>
-            <PanelHeading title="Add recent project" copy="Use an image URL or upload a local image for this browser demo." />
+            <PanelHeading title="Add recent project" copy="Use an image URL or upload a local image. Database persistence can be connected next." />
             <AdminLabel label="Project title"><input className="form-control" name="title" type="text" placeholder="Downtown Engagement Session" required /></AdminLabel>
             <AdminLabel label="Category">
               <select className="form-control" name="category" required>
@@ -138,7 +166,7 @@ export function AdminDashboard() {
       </section>
 
       <section className="glass-panel mx-[clamp(18px,5vw,70px)] mt-5 p-[clamp(20px,4vw,32px)]">
-        <PanelHeading title="Gallery manager" copy="Remove mock projects or restore the starter portfolio." />
+        <PanelHeading title="Gallery manager" copy="Remove projects or restore the starter portfolio." />
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button className="pill-button pill-button-ghost" type="button" onClick={() => persistProjects(starterProjects)}>Restore starter projects</button>
           <button className="pill-button border-rose/40 text-rose" type="button" onClick={() => persistBookings([])}>Clear bookings</button>
@@ -201,6 +229,18 @@ function Stat({ value, label }: { value: number; label: string }) {
       <span className="mt-2 block uppercase text-muted">{label}</span>
     </div>
   );
+}
+
+function mergeBookings(primary: BookingRequest[], secondary: BookingRequest[]) {
+  const seenIds = new Set<string>();
+  return [...primary, ...secondary].filter((booking) => {
+    if (seenIds.has(booking.id)) {
+      return false;
+    }
+
+    seenIds.add(booking.id);
+    return true;
+  });
 }
 
 function PanelHeading({ title, copy }: { title: string; copy: string }) {

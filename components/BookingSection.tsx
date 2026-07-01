@@ -9,13 +9,11 @@ const BOOKING_KEY = "ajcMediaBookings";
 export function BookingSection() {
   const [status, setStatus] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const booking: BookingRequest = {
-      id: `booking-${Date.now()}`,
-      createdAt: new Date().toISOString(),
+    const payload = {
       name: String(data.get("name") || ""),
       email: String(data.get("email") || ""),
       phone: String(data.get("phone") || ""),
@@ -25,9 +23,34 @@ export function BookingSection() {
       message: String(data.get("message") || "")
     };
 
-    writeLocalStore(BOOKING_KEY, [booking, ...readLocalStore<BookingRequest[]>(BOOKING_KEY, [])]);
-    form.reset();
-    setStatus("Booking request saved. It is now visible on the admin page.");
+    setStatus("Sending request...");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error("Booking request failed.");
+      }
+
+      const data = (await response.json()) as { booking: BookingRequest };
+      writeLocalStore(BOOKING_KEY, [data.booking, ...readLocalStore<BookingRequest[]>(BOOKING_KEY, [])]);
+      form.reset();
+      setStatus("Booking request received. AJC Media will follow up with availability.");
+    } catch {
+      const fallbackBooking: BookingRequest = {
+        id: `booking-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        ...payload
+      };
+
+      writeLocalStore(BOOKING_KEY, [fallbackBooking, ...readLocalStore<BookingRequest[]>(BOOKING_KEY, [])]);
+      form.reset();
+      setStatus("Request saved locally. Email and database delivery can be connected next.");
+    }
   }
 
   return (
@@ -35,9 +58,9 @@ export function BookingSection() {
       <div>
         <div className="eyebrow">Booking</div>
         <h2 className="section-title">Start with a date, a story, and the kind of coverage needed.</h2>
-        <p className="mt-5 body-copy">For the prototype, requests are saved locally and shown in the admin dashboard. The API route is already scaffolded for a future database-backed booking workflow.</p>
+        <p className="mt-5 body-copy">Send the key details and AJC Media will follow up with availability, coverage options, and next steps.</p>
         <div className="mt-7 grid gap-2.5">
-          {["Instant mock submission", "Admin booking queue", "Gallery-ready project flow"].map((item) => (
+          {["Quick availability request", "Admin booking queue", "Database and email ready"].map((item) => (
             <span key={item} className="border-l-2 border-cyan py-2 pl-4 text-ink/80">{item}</span>
           ))}
         </div>

@@ -8,6 +8,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as Omit<BookingRequest, "id" | "createdAt">;
+  const requiredFields = [payload.name, payload.email, payload.type, payload.date, payload.budget, payload.message];
+
+  if (requiredFields.some((field) => !field?.trim())) {
+    return NextResponse.json({ error: "Missing required booking fields." }, { status: 400 });
+  }
+
   const booking: BookingRequest = {
     id: createId("booking"),
     createdAt: new Date().toISOString(),
@@ -20,6 +26,8 @@ export async function POST(request: Request) {
     message: payload.message
   };
 
+  // Temporary live bridge: this keeps the API contract ready while MongoDB
+  // and email delivery credentials are still pending.
   memoryStore.bookings.unshift(booking);
   return NextResponse.json({ booking }, { status: 201 });
 }

@@ -1,15 +1,57 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+const fallbackAdminPassword = "michaelchuabading123";
+const adminPassword = process.env.ADMIN_PASSWORD || fallbackAdminPassword;
+const adminSessionToken = process.env.ADMIN_SESSION_TOKEN || `ajc-admin-${adminPassword}`;
+const adminCookieName = "ajc_admin_session";
+
 export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === "/about") {
+    const aboutUrl = new URL("/", request.url);
+    aboutUrl.hash = "about";
+    return NextResponse.redirect(aboutUrl);
+  }
+
+  if (requiresAdminAuth(request) && !hasValidAdminAuth(request)) {
+    if (request.nextUrl.pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
   const response = NextResponse.next();
 
   response.headers.set("x-ajc-route", request.nextUrl.pathname);
-
-  // Future production hook:
-  // Protect /admin with auth here, for example NextAuth, Clerk, or custom session cookies.
   return response;
 }
 
+function requiresAdminAuth(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/api/admin/login")) {
+    return false;
+  }
+
+  if (pathname.startsWith("/admin")) {
+    return true;
+  }
+
+  if (pathname.startsWith("/api/bookings")) {
+    return request.method !== "POST";
+  }
+
+  if (pathname.startsWith("/api/projects")) {
+    return request.method !== "GET";
+  }
+
+  return false;
+}
+
+function hasValidAdminAuth(request: NextRequest) {
+  return request.cookies.get(adminCookieName)?.value === adminSessionToken;
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/:path*"]
+  matcher: ["/about", "/admin/:path*", "/api/:path*"]
 };

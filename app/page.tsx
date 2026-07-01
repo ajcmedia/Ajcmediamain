@@ -1,3 +1,4 @@
+import { AboutSection } from "@/components/AboutSection";
 import { BookingSection } from "@/components/BookingSection";
 import { BeforeAfterSection } from "@/components/BeforeAfterSection";
 import { CinematicExperienceSection } from "@/components/CinematicExperienceSection";
@@ -18,6 +19,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <IntroStrip />
+        <AboutSection />
         <CinematicExperienceSection />
         <ExhibitPortalSection />
         <ServicesSection />

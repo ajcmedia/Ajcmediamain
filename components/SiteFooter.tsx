@@ -33,7 +33,7 @@ export function SiteFooter({ adminLabel = "Admin dashboard", adminHref = "/admin
       </div>
 
       <div className="flex flex-col gap-4 border-t border-white/15 pt-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-        <span>© 2026 AJC Media. Draft website mockup.</span>
+        <span>© 2026 AJC Media. Vancouver photography for weddings, events, portraits, and brand stories.</span>
         <Link className="transition hover:text-ink" href={adminHref}>
           {adminLabel}
         </Link>

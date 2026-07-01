@@ -242,7 +242,7 @@ textarea {
 
 @media (min-width: 640px) {
   .exhibit-frame {
-    width: min(66vw, 500px);
+    width: min(68vw, 520px);
   }
 }
 
@@ -272,7 +272,7 @@ textarea {
   }
 
   .exhibit-frame {
-    width: min(28vw, 400px);
+    width: min(30vw, 430px);
   }
 
   .exhibit-frame-image {
@@ -305,7 +305,7 @@ textarea {
   }
 
   .exhibit-frame {
-    width: min(25vw, 340px);
+    width: min(25.5vw, 350px);
   }
 }
 
