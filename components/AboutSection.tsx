@@ -23,7 +23,7 @@ const approachCards = [
 export function AboutSection() {
   return (
     <section id="about" className="section-pad scroll-mt-24 border-y border-white/10 bg-[linear-gradient(135deg,rgba(61,229,255,0.06),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent)]">
-      <div className="grid items-center gap-[clamp(28px,5vw,68px)] lg:grid-cols-[minmax(0,0.88fr)_minmax(320px,0.62fr)]">
+      <div data-scroll-anchor className="grid items-center gap-[clamp(28px,5vw,68px)] lg:grid-cols-[minmax(0,0.88fr)_minmax(320px,0.62fr)]">
         <Reveal>
           <div>
             <p className="eyebrow">Behind the camera</p>

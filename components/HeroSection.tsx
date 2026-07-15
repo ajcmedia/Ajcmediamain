@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ButtonLink } from "@/components/ButtonLink";
+import { FramedImage } from "@/components/FramedImage";
 import { CalendarIcon, GalleryIcon } from "@/components/Icons";
+import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
 
 const showcaseFrames = [
   { image: "/assets/gallery/reception-dance.png", alt: "Wedding reception photography sample", className: "showcase-main", priority: true },
@@ -72,6 +74,7 @@ export function HeroSection() {
     <section ref={heroRef} onPointerMove={handlePointerMove} className="relative grid min-h-[94svh] overflow-hidden px-[clamp(18px,5vw,70px)] pb-12 pt-28" id="top" aria-label="AJC Media hero">
       <div className="hero-bg absolute inset-0" aria-hidden="true">
         <Image className="h-full w-full scale-[1.04] object-cover" src="/assets/gallery/hero-lens.png" alt="" fill priority sizes="100vw" />
+        <WebGLAtmosphere variant="hero" className="z-[1] opacity-35 mix-blend-screen" />
         <div className="absolute inset-x-0 -top-1/4 h-[22%] animate-scan bg-gradient-to-b from-transparent via-cyan/20 to-transparent" />
         <div className="focus-field absolute inset-0 opacity-85" />
       </div>
@@ -134,12 +137,12 @@ export function HeroSection() {
             {["baby-shower.png", "neon-portrait.png", "graduation-family.png", "forest-engagement.png"].map((image, index) => (
               <button
                 key={image}
-                className={`relative min-w-[28%] overflow-hidden border transition ${selectedFrame === index ? "border-cyan shadow-[0_0_28px_rgba(61,229,255,0.3)]" : "border-white/20"}`}
+                className={`relative aspect-[4/3] min-w-[28%] overflow-hidden border bg-night transition ${selectedFrame === index ? "border-cyan shadow-[0_0_28px_rgba(61,229,255,0.3)]" : "border-white/20"}`}
                 type="button"
                 aria-label={`Focus portfolio frame ${index + 1}`}
                 onClick={() => setSelectedFrame(index)}
               >
-                <Image className="aspect-[4/3] w-full object-cover" src={`/assets/gallery/${image}`} alt="" width={320} height={240} />
+                <FramedImage src={`/assets/gallery/${image}`} alt="" sizes="(max-width: 1024px) 28vw, 180px" />
                 {selectedFrame === index ? <div className="absolute inset-2 border border-cyan/80" /> : null}
               </button>
             ))}
@@ -176,7 +179,7 @@ function ShowcaseCard({
       onClick={onFocus}
       aria-label={alt}
     >
-      <Image className={`h-full w-full object-cover transition duration-700 ${selected ? "scale-[1.035] saturate-125" : ""}`} src={image} alt={alt} fill priority={priority} sizes="(max-width: 1024px) 80vw, 45vw" />
+      <FramedImage className={`transition duration-700 ${selected ? "scale-[1.025] saturate-125" : ""}`} src={image} alt={alt} priority={priority} sizes="(max-width: 1024px) 80vw, 45vw" />
       {selected ? (
         <>
           <div className="pointer-events-none absolute inset-3 border border-cyan/85" />

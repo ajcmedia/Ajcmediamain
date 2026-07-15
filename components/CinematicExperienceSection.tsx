@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FramedImage } from "@/components/FramedImage";
 
 const scenes = [
   {
@@ -32,11 +32,14 @@ const scenes = [
 
 export function CinematicExperienceSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const pinRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
+  const desktopStageRef = useRef<HTMLDivElement>(null);
+  const mobileRailRef = useRef<HTMLDivElement>(null);
+  const [activeScene, setActiveScene] = useState(0);
+  const activeSceneRef = useRef(0);
 
   useEffect(() => {
     let context: { revert: () => void } | undefined;
+    let mediaContext: { add: (conditions: string, callback: () => void | (() => void)) => void; revert: () => void } | undefined;
     let isCancelled = false;
 
     async function setupMotion() {
@@ -45,77 +48,36 @@ export function CinematicExperienceSection() {
         import("gsap/ScrollTrigger")
       ]);
 
-      if (isCancelled || !sectionRef.current || !pinRef.current) {
+      if (isCancelled || !sectionRef.current || !desktopStageRef.current) {
         return;
       }
 
       gsap.registerPlugin(ScrollTrigger);
-
       context = gsap.context(() => {
-        const frames = gsap.utils.toArray<HTMLElement>(".reel-frame");
-        const steps = gsap.utils.toArray<HTMLElement>(".reel-step");
-        const labels = gsap.utils.toArray<HTMLElement>(".reel-timeline-label");
-
-        gsap.set(frames, { autoAlpha: 0, scale: 1.1, yPercent: 5 });
-        gsap.set(frames[0], { autoAlpha: 1, scale: 1, yPercent: 0 });
-        gsap.set(steps, { autoAlpha: 0.34, x: 18 });
-        gsap.set(steps[0], { autoAlpha: 1, x: 0 });
-        gsap.set(labels, { autoAlpha: 0.4 });
-        gsap.set(labels[0], { autoAlpha: 1 });
-        gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
-
-        if (window.matchMedia("(min-width: 1024px) and (min-height: 650px) and (prefers-reduced-motion: no-preference)").matches) {
-          const timeline = gsap.timeline({
-            defaults: { ease: "none" },
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top top",
-              end: () => `+=${window.innerHeight * 3.2}`,
-              pin: pinRef.current,
-              scrub: 0.8,
-              anticipatePin: 1,
-              invalidateOnRefresh: true
+        mediaContext = gsap.matchMedia();
+        mediaContext.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
+          const trigger = ScrollTrigger.create({
+            trigger: sectionRef.current,
+            start: "top top",
+            end: () => `+=${Math.max(window.innerHeight * 3.2, 2200)}`,
+            pin: desktopStageRef.current,
+            scrub: 0.55,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const nextScene = Math.min(scenes.length - 1, Math.floor(self.progress * scenes.length));
+              if (nextScene !== activeSceneRef.current) {
+                activeSceneRef.current = nextScene;
+                setActiveScene(nextScene);
+              }
+              sectionRef.current?.style.setProperty("--reel-progress", `${Math.max(0.02, self.progress)}`);
+              const sceneProgress = self.progress * scenes.length - nextScene;
+              sectionRef.current?.style.setProperty("--scene-progress", `${Math.max(0, Math.min(1, sceneProgress))}`);
             }
           });
 
-          timeline.to(progressRef.current, { scaleX: 1, duration: scenes.length - 1 }, 0);
-
-          scenes.forEach((_, index) => {
-            timeline.to(steps, { autoAlpha: 0.28, x: 18, duration: 0.18 }, index);
-            timeline.to(labels, { autoAlpha: 0.4, duration: 0.18 }, index);
-            timeline.to(steps[index], { autoAlpha: 1, x: 0, duration: 0.18 }, index);
-            timeline.to(labels[index], { autoAlpha: 1, duration: 0.18 }, index);
-
-            if (index > 0) {
-              timeline.to(frames[index - 1], { autoAlpha: 0, scale: 0.96, yPercent: -4, duration: 0.34 }, index - 0.04);
-              timeline.fromTo(
-                frames[index],
-                { autoAlpha: 0, scale: 1.1, yPercent: 6 },
-                { autoAlpha: 1, scale: 1, yPercent: 0, duration: 0.44 },
-                index
-              );
-            }
-          });
-        } else {
-          const mobileTimeline = gsap.timeline({ repeat: -1, repeatDelay: 0.35 });
-          gsap.set(frames[0], { autoAlpha: 1, scale: 1, yPercent: 0 });
-
-          scenes.forEach((_, index) => {
-            mobileTimeline.to(steps, { autoAlpha: 0.32, x: 12, duration: 0.28 }, index * 2.65);
-            mobileTimeline.to(labels, { autoAlpha: 0.4, duration: 0.28 }, index * 2.65);
-            mobileTimeline.to(frames, { autoAlpha: 0, scale: 1.05, duration: 0.32 }, index * 2.65);
-            mobileTimeline.to(steps[index], { autoAlpha: 1, x: 0, duration: 0.34 }, index * 2.65);
-            mobileTimeline.to(labels[index], { autoAlpha: 1, duration: 0.34 }, index * 2.65);
-            mobileTimeline.to(frames[index], { autoAlpha: 1, scale: 1, yPercent: 0, duration: 0.55, ease: "power2.out" }, index * 2.65);
-          });
-
-          gsap.to(progressRef.current, {
-            scaleX: 1,
-            duration: scenes.length * 2.65,
-            ease: "none",
-            repeat: -1
-          });
-        }
+          return () => trigger.kill();
+        });
       }, sectionRef);
 
       ScrollTrigger.refresh();
@@ -125,69 +87,188 @@ export function CinematicExperienceSection() {
 
     return () => {
       isCancelled = true;
+      mediaContext?.revert();
       context?.revert();
     };
   }, []);
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 899px)");
+    const syncMobileRail = () => {
+      if (!mobileQuery.matches) {
+        return;
+      }
+      window.requestAnimationFrame(() => {
+        if (mobileRailRef.current) {
+          mobileRailRef.current.scrollLeft = 0;
+        }
+        activeSceneRef.current = 0;
+        setActiveScene(0);
+      });
+    };
+
+    mobileQuery.addEventListener("change", syncMobileRail);
+    syncMobileRail();
+    return () => mobileQuery.removeEventListener("change", syncMobileRail);
+  }, []);
+
+  function handleMobileScroll() {
+    const rail = mobileRailRef.current;
+    if (!rail) {
+      return;
+    }
+
+    const cards = Array.from(rail.querySelectorAll<HTMLElement>("[data-reel-card]"));
+    const railCenter = rail.scrollLeft + rail.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(cardCenter - railCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    if (nearestIndex !== activeSceneRef.current) {
+      activeSceneRef.current = nearestIndex;
+      setActiveScene(nearestIndex);
+    }
+  }
+
+  function focusMobileScene(index: number) {
+    const rail = mobileRailRef.current;
+    const card = rail?.querySelector<HTMLElement>(`[data-reel-card="${index}"]`);
+    if (!rail || !card) {
+      return;
+    }
+
+    rail.scrollTo({
+      left: card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+    });
+  }
+
   return (
-    <section ref={sectionRef} className="relative overflow-hidden bg-night text-ink">
-      <div ref={pinRef} className="relative min-h-[100svh] px-[clamp(18px,5vw,70px)] pb-[clamp(34px,5svh,72px)] pt-[clamp(82px,10svh,116px)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(61,229,255,0.16),transparent_28%),radial-gradient(circle_at_86%_16%,rgba(255,189,115,0.13),transparent_30%),linear-gradient(180deg,rgba(5,7,11,0.18),rgba(5,7,11,0.94))]" />
-        <div className="relative z-10 grid min-h-0 items-center gap-[clamp(18px,4vw,48px)] sm:min-h-[calc(100svh-188px)] lg:grid-cols-[minmax(0,0.78fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_minmax(0,1fr)]">
-          <div className="order-1 lg:col-start-1 lg:row-start-1">
+    <section ref={sectionRef} id="experience" className="experience-reel relative overflow-hidden bg-night text-ink">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(61,229,255,0.15),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(255,189,115,0.12),transparent_28%),linear-gradient(180deg,#07111a,#05070b_72%)]" />
+      <div className="reel-grid pointer-events-none absolute inset-0 opacity-35" />
+
+      <div ref={desktopStageRef} className="reel-desktop relative z-10 min-h-[100svh] px-[clamp(34px,5vw,70px)] py-[clamp(78px,8svh,104px)]">
+        <div className="pointer-events-none absolute right-[3vw] top-[7svh] select-none font-mono text-[clamp(6rem,15vw,14rem)] font-black leading-none text-white/[0.025]" aria-hidden="true">
+          {String(activeScene + 1).padStart(2, "0")}
+        </div>
+        <div className="grid min-h-[calc(100svh-clamp(156px,16svh,208px))] grid-cols-[minmax(320px,0.76fr)_minmax(480px,1.12fr)] items-center gap-[clamp(42px,6vw,92px)]">
+          <div className="flex min-h-0 flex-col justify-center">
             <p className="eyebrow">Experience Reel</p>
-            <h2 className="max-w-[11ch] text-[clamp(2rem,4.9vw,5.2rem)] font-black leading-[0.9] tracking-normal text-ink">
+            <h2 className="max-w-[10ch] text-[clamp(2.8rem,4.4vw,5.1rem)] font-black leading-[0.91] tracking-normal text-ink">
               Feel the day before you book it.
             </h2>
-            <p className="mt-4 max-w-xl text-[clamp(0.92rem,1.25vw,1.12rem)] leading-relaxed text-ink/72">
-              A visitor should not only see photos. They should feel the rhythm of a real event becoming a polished gallery.
+            <p className="mt-5 max-w-[560px] text-[clamp(1rem,1.2vw,1.16rem)] leading-relaxed text-ink/68">
+              A four-scene cut from quiet detail to final delivery. Scroll at your own pace; every beat has room to land.
             </p>
-          </div>
 
-          <div className="order-3 hidden gap-2.5 sm:grid lg:col-start-1 lg:row-start-2 lg:max-h-[calc(100svh-430px)] lg:content-start lg:overflow-hidden">
-            <div className="mt-5 grid gap-2.5">
-              {scenes.map((scene) => (
-                <article key={scene.label} className="reel-step border-l border-white/15 pl-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-gold">{scene.label}</p>
-                  <h3 className="mt-1 text-[clamp(1.16rem,1.8vw,1.72rem)] font-black leading-tight text-ink">{scene.title}</h3>
-                  <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted">{scene.copy}</p>
-                </article>
+            <div className="reel-chapter-list mt-[clamp(24px,4vh,42px)] border-l border-white/15">
+              {scenes.map((scene, index) => (
+                <button
+                  key={scene.label}
+                  className="reel-chapter block w-full border-l-2 border-transparent py-2.5 pl-5 text-left"
+                  type="button"
+                  data-active={activeScene === index}
+                  onClick={() => {
+                    activeSceneRef.current = index;
+                    setActiveScene(index);
+                  }}
+                  aria-current={activeScene === index ? "step" : undefined}
+                >
+                  <span className="flex items-center gap-3 text-[0.64rem] font-black uppercase tracking-[0.18em] text-white/35">
+                    <span className="reel-chapter-dot h-1.5 w-1.5 rounded-full bg-white/25" /> {scene.label}
+                  </span>
+                  <span className="mt-1 block text-[clamp(1.1rem,1.55vw,1.75rem)] font-black leading-none text-white/32 transition">{scene.title}</span>
+                  <span className="reel-chapter-copy mt-2 block max-w-[520px] overflow-hidden text-sm leading-relaxed text-muted">{scene.copy}</span>
+                </button>
               ))}
             </div>
           </div>
 
-          <div className="order-2 relative h-[min(45svh,360px)] min-h-[260px] min-[430px]:min-h-[330px] sm:h-[min(52svh,430px)] sm:min-h-[500px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-[min(62svh,600px)] lg:min-h-[390px]">
-            <div className="absolute inset-0 rounded-[999px] border border-cyan/15" aria-hidden="true" />
-            <div className="absolute inset-[7%] rounded-[999px] border border-dashed border-gold/20" aria-hidden="true" />
-            <div className="absolute inset-[11%] overflow-hidden border border-white/15 bg-black shadow-[0_0_90px_rgba(61,229,255,0.16)]">
-              {scenes.map((scene) => (
-                <div key={scene.title} className="reel-frame absolute inset-0">
-                  <Image className="h-full w-full object-cover" src={scene.image} alt={scene.title} fill sizes="(max-width: 1024px) 88vw, 44vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/20" />
-                  <div className="absolute bottom-14 left-5 right-5 hidden sm:block">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-gold">{scene.label}</p>
-                    <h3 className="mt-1 max-w-sm text-[clamp(1.25rem,4.8vw,2.4rem)] font-black leading-none text-ink">{scene.title}</h3>
+          <div className="relative mx-auto aspect-[4/3] w-full max-w-[860px]">
+            <div className="reel-orbit absolute -inset-[9%] rounded-[48%] border border-cyan/15" aria-hidden="true" />
+            <div className="reel-orbit reel-orbit-secondary absolute -inset-[3%] rounded-[46%] border border-dashed border-gold/20" aria-hidden="true" />
+            <div className="absolute inset-0 overflow-hidden border border-white/15 bg-black shadow-[0_0_110px_rgba(61,229,255,0.15)]">
+              {scenes.map((scene, index) => (
+                <div key={scene.title} className="reel-frame absolute inset-0" data-active={activeScene === index} aria-hidden={activeScene !== index}>
+                  <FramedImage src={scene.image} alt={scene.title} sizes="(max-width: 1280px) 56vw, 860px" />
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/68 via-transparent to-black/20" />
+                  <div className="absolute bottom-7 left-7 z-20 max-w-md">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-gold">Now viewing / {scene.label}</p>
+                    <p className="mt-2 text-[clamp(1.35rem,2vw,2.4rem)] font-black leading-none text-ink">{scene.title}</p>
                   </div>
                 </div>
               ))}
-              <div className="pointer-events-none absolute inset-5 border border-cyan/45" />
-              <div className="pointer-events-none absolute left-5 top-5 h-8 w-8 border-l-2 border-t-2 border-gold" />
-              <div className="pointer-events-none absolute bottom-5 right-5 h-8 w-8 border-b-2 border-r-2 border-gold" />
-              <div className="absolute bottom-5 left-5 right-5">
-                <div className="h-px bg-white/20">
-                  <div ref={progressRef} className="h-px w-full bg-cyan shadow-[0_0_18px_rgba(61,229,255,0.8)]" />
-                </div>
-                <div className="mt-3 grid grid-cols-4 gap-2 text-[0.62rem] font-black uppercase tracking-[0.14em] text-white/55">
-                  {scenes.map((scene) => (
-                    <span key={scene.label} className="reel-timeline-label">{scene.label.replace("Scene ", "")}</span>
-                  ))}
-                </div>
+              <div className="pointer-events-none absolute inset-5 z-30 border border-cyan/38" />
+              <div className="reel-shutter-line pointer-events-none absolute inset-y-0 left-0 z-30 w-px bg-cyan/70 shadow-[0_0_24px_rgba(61,229,255,0.9)]" />
+              <div className="pointer-events-none absolute left-5 top-5 z-30 h-10 w-10 border-l-2 border-t-2 border-gold" />
+              <div className="pointer-events-none absolute bottom-5 right-5 z-30 h-10 w-10 border-b-2 border-r-2 border-gold" />
+              <div className="absolute inset-x-0 bottom-0 z-30 h-px bg-white/15">
+                <div className="reel-scroll-progress h-px origin-left bg-cyan shadow-[0_0_20px_rgba(61,229,255,0.9)]" />
               </div>
             </div>
-            <div className="absolute -right-2 top-[18%] hidden rotate-90 text-xs font-black uppercase tracking-[0.2em] text-cyan/75 sm:block">
-              Scroll edit
-            </div>
+            <span className="absolute -right-8 top-1/2 -translate-y-1/2 rotate-90 text-[0.62rem] font-black uppercase tracking-[0.22em] text-cyan/65">
+              Scroll to cut
+            </span>
           </div>
+        </div>
+      </div>
+
+      <div className="reel-mobile relative z-10 px-[clamp(18px,5vw,44px)] py-[clamp(64px,9vw,92px)]">
+        <p className="eyebrow">Experience Reel</p>
+        <h2 className="max-w-[11ch] text-[clamp(2.4rem,10vw,4.5rem)] font-black leading-[0.92] tracking-normal text-ink">
+          Feel the day before you book it.
+        </h2>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-ink/68">
+          Swipe through four moments. On touch screens, the story stays in your hands instead of being tied to the page scroll.
+        </p>
+
+        <div className="mt-7 flex items-center justify-between border-y border-white/10 py-3 text-xs font-black uppercase tracking-[0.16em] text-white/45">
+          <span>Swipe scenes</span>
+          <span className="text-cyan">{String(activeScene + 1).padStart(2, "0")} / {String(scenes.length).padStart(2, "0")}</span>
+        </div>
+
+        <div
+          ref={mobileRailRef}
+          className="reel-mobile-rail -mx-[clamp(18px,5vw,44px)] mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[clamp(18px,5vw,44px)] pb-5"
+          onScroll={handleMobileScroll}
+        >
+          {scenes.map((scene, index) => (
+            <article key={scene.label} data-reel-card={index} className="w-[84vw] max-w-[440px] shrink-0 snap-center overflow-hidden border border-white/15 bg-white/[0.035] shadow-glow">
+              <div className="relative aspect-[4/5] overflow-hidden bg-black">
+                <FramedImage src={scene.image} alt={scene.title} sizes="(max-width: 1023px) 84vw, 440px" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-transparent to-black/10" />
+                <span className="absolute left-4 top-4 border border-cyan/35 bg-night/75 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.16em] text-cyan backdrop-blur-md">
+                  {scene.label}
+                </span>
+              </div>
+              <div className="p-5">
+                <h3 className="text-[clamp(1.55rem,7vw,2.2rem)] font-black leading-none text-ink">{scene.title}</h3>
+                <p className="mt-3 leading-relaxed text-muted">{scene.copy}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-2 flex justify-center gap-2" aria-label="Choose experience reel scene">
+          {scenes.map((scene, index) => (
+            <button
+              key={scene.label}
+              className={`h-2.5 rounded-full transition-all ${activeScene === index ? "w-9 bg-cyan" : "w-2.5 bg-white/20"}`}
+              type="button"
+              onClick={() => focusMobileScene(index)}
+              aria-label={`Show ${scene.title}`}
+              aria-current={activeScene === index ? "step" : undefined}
+            />
+          ))}
         </div>
       </div>
     </section>

@@ -55,7 +55,7 @@ export function BookingSection() {
 
   return (
     <section className="section-pad grid items-start gap-[clamp(28px,5vw,70px)] lg:grid-cols-[minmax(0,0.82fr)_minmax(320px,1fr)]" id="booking">
-      <div>
+      <div data-scroll-anchor>
         <div className="eyebrow">Booking</div>
         <h2 className="section-title">Start with a date, a story, and the kind of coverage needed.</h2>
         <p className="mt-5 body-copy">Send the key details and AJC Media will follow up with availability, coverage options, and next steps.</p>

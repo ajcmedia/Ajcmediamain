@@ -40,6 +40,7 @@ export function GalleryExperience() {
 
   return (
     <section className="section-pad" id="gallery">
+      <div data-scroll-anchor>
       <Reveal>
         <div className="eyebrow">Gallery</div>
       </Reveal>
@@ -49,6 +50,7 @@ export function GalleryExperience() {
           <p className="body-copy">The photographer can add more projects from the admin page. The future backend can hydrate this same component from an API or CMS.</p>
         </div>
       </Reveal>
+      </div>
 
       <Reveal>
         <div className="mb-6 flex flex-wrap gap-2.5" role="tablist" aria-label="Gallery filters">

@@ -4,10 +4,12 @@ import { pricingPackages } from "@/data/site";
 export function PricingSection() {
   return (
     <section className="section-pad bg-[linear-gradient(90deg,rgba(255,189,115,0.08),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.035),transparent)]" id="pricing">
+      <div data-scroll-anchor>
       <div className="eyebrow">Pricing</div>
       <div className="section-heading">
         <h2 className="section-title">Simple starting points for a sales-ready conversation.</h2>
         <p className="body-copy">These starting packages make it easy to choose a direction, then refine coverage based on the event, location, and final deliverables.</p>
+      </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
         {pricingPackages.map((item) => (

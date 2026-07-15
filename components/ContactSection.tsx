@@ -3,7 +3,7 @@ import { socials } from "@/data/site";
 export function ContactSection() {
   return (
     <section className="section-pad flex flex-col gap-6 border-t border-white/15 lg:flex-row lg:items-center lg:justify-between" id="contact">
-      <div>
+      <div data-scroll-anchor>
         <div className="eyebrow">Contact</div>
         <h2 className="section-title">Ready when the next story needs a lens.</h2>
         <p className="mt-4 body-copy">Serving Vancouver, Burnaby, Richmond, Surrey, Coquitlam, and nearby Lower Mainland locations.</p>

@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import type { PointerEvent } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 import { useEffect, useRef } from "react";
+import { FramedImage } from "@/components/FramedImage";
 import { Reveal } from "@/components/Reveal";
+import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
 
 const exhibitFrames = [
   { title: "Reception Dance Energy", image: "/assets/gallery/reception-dance.png" },
@@ -46,7 +47,7 @@ export function EditorialExhibitSection() {
         gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
         gsap.set(frames, { autoAlpha: 1, scale: 1, rotateZ: 0 });
 
-        if (window.matchMedia("(min-width: 1024px) and (min-height: 650px) and (prefers-reduced-motion: no-preference)").matches) {
+        if (window.matchMedia("(min-width: 900px) and (prefers-reduced-motion: no-preference)").matches) {
           const getDistance = () => {
             if (!trackRef.current || !viewportRef.current) {
               return 0;
@@ -130,7 +131,7 @@ export function EditorialExhibitSection() {
   }, []);
 
   function handleRailPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (!trackRef.current || window.matchMedia("(min-width: 1024px) and (min-height: 650px)").matches) {
+    if (!trackRef.current || window.matchMedia("(min-width: 900px)").matches) {
       return;
     }
 
@@ -171,23 +172,28 @@ export function EditorialExhibitSection() {
     }
 
     const amount = Math.min(trackRef.current.clientWidth * 0.82, 420);
-    trackRef.current.scrollBy({ left: direction * amount, behavior: "smooth" });
+    trackRef.current.scrollBy({
+      left: direction * amount,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+    });
   }
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden bg-[#efeee9] text-night">
+    <section ref={sectionRef} id="editorial" className="editorial-section relative overflow-hidden bg-[#071019] text-ink">
+      <WebGLAtmosphere variant="editorial" className="opacity-75 mix-blend-screen" />
+      <div className="editorial-scan pointer-events-none absolute inset-0" aria-hidden="true" />
       <div ref={viewportRef} className="editorial-viewport relative flex min-h-[100svh] flex-col justify-start overflow-hidden px-[clamp(18px,5vw,70px)] py-[clamp(58px,8vw,104px)]">
-        <p className="absolute left-1/2 top-8 -translate-x-1/2 text-xs font-black uppercase tracking-[0.18em] text-night/45">Scroll to explore</p>
-        <div className="pointer-events-none absolute inset-x-0 top-[12%] select-none text-center text-[clamp(4.4rem,16vw,14rem)] font-black uppercase leading-none tracking-normal text-night/[0.11]">
-          AJC Media
+        <p className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap text-[0.62rem] font-black uppercase tracking-[0.22em] text-white/35">Archive / scroll to explore</p>
+        <div className="pointer-events-none absolute inset-x-0 top-[11%] select-none text-center text-[clamp(4.4rem,16vw,14rem)] font-black uppercase leading-none tracking-normal text-white/[0.035]">
+          Archive 26
         </div>
 
         <div className="relative z-10">
         <Reveal>
           <div className="mx-auto mt-10 max-w-3xl text-center">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-night/60">Editorial Wall</p>
-            <h2 className="editorial-title mt-4 text-[clamp(2rem,4.1vw,4.45rem)] font-black leading-none text-night">Portfolio work, staged like an exhibit.</h2>
-            <p className="editorial-copy mt-5 text-bloom text-lg leading-relaxed text-night/70">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan">Editorial Wall</p>
+            <h2 className="editorial-title mt-4 text-[clamp(2.2rem,4.1vw,4.6rem)] font-black leading-[0.94] text-ink">An illuminated archive of real moments.</h2>
+            <p className="editorial-copy mt-5 text-bloom text-lg leading-relaxed text-ink/62">
               {introWords.split(" ").map((word, index) => (
                 <span key={`${word}-${index}`} style={{ animationDelay: `${index * 45}ms` }}>{word} </span>
               ))}
@@ -195,17 +201,17 @@ export function EditorialExhibitSection() {
           </div>
         </Reveal>
 
-          <div className="editorial-rule mx-auto mt-10 h-px max-w-6xl bg-night/15">
-            <div ref={progressRef} className="h-px w-full bg-night shadow-[0_0_16px_rgba(5,7,11,0.3)]" />
+          <div className="editorial-rule mx-auto mt-10 h-px max-w-6xl bg-white/12">
+            <div ref={progressRef} className="h-px w-full bg-gradient-to-r from-cyan via-white to-gold shadow-[0_0_18px_rgba(61,229,255,0.6)]" />
           </div>
 
-          <div className="mt-4 text-center text-xs font-black uppercase tracking-[0.16em] text-night/45">
-            <span className="hidden lg:inline">Scroll to move panels / </span>Drag or swipe panels
+          <div className="mt-4 text-center text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/38">
+            <span className="editorial-scroll-hint">Vertical scroll drives the horizontal light table / </span><span className="editorial-touch-hint">Drag or swipe frames</span>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-3 lg:hidden">
+          <div className="editorial-rail-controls mt-4 flex items-center justify-center gap-3">
             <button
-              className="grid h-11 w-11 place-items-center rounded-full border border-night/20 bg-night text-xl font-black text-ink shadow-[0_12px_34px_rgba(5,7,11,0.16)]"
+              className="grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/5 text-xl font-black text-ink shadow-glow backdrop-blur-md"
               type="button"
               aria-label="Previous editorial panel"
               onClick={() => scrollRailBy(-1)}
@@ -213,7 +219,7 @@ export function EditorialExhibitSection() {
               ‹
             </button>
             <button
-              className="grid h-11 w-11 place-items-center rounded-full border border-night/20 bg-night text-xl font-black text-ink shadow-[0_12px_34px_rgba(5,7,11,0.16)]"
+              className="grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/5 text-xl font-black text-ink shadow-glow backdrop-blur-md"
               type="button"
               aria-label="Next editorial panel"
               onClick={() => scrollRailBy(1)}
@@ -224,7 +230,7 @@ export function EditorialExhibitSection() {
 
           <div
             ref={trackRef}
-            className="exhibit-rail editorial-rail mt-6 flex snap-x gap-3 overflow-x-auto pb-6 sm:gap-5 lg:overflow-visible"
+            className="exhibit-rail editorial-rail mt-6 flex snap-x gap-3 overflow-x-auto pb-6 sm:gap-5"
             onPointerDown={handleRailPointerDown}
             onPointerMove={handleRailPointerMove}
             onPointerUp={stopRailDrag}
@@ -232,15 +238,17 @@ export function EditorialExhibitSection() {
             onPointerLeave={stopRailDrag}
           >
             {exhibitFrames.map((frame, index) => (
-              <figure key={frame.title} className="exhibit-frame group shrink-0 snap-center">
-                <div className="exhibit-frame-image relative aspect-[4/3] overflow-hidden bg-night shadow-[0_28px_90px_rgba(5,7,11,0.22)]">
-                  <Image draggable={false} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" src={frame.image} alt={frame.title} fill sizes="(max-width: 768px) 78vw, 52vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent opacity-70" />
-                  <span className="absolute left-4 top-4 rounded-full bg-white/85 px-3 py-1 text-xs font-black uppercase text-night">Panel {String(index + 1).padStart(2, "0")}</span>
+              <figure key={frame.title} className="exhibit-frame group shrink-0 snap-center" style={{ "--frame-index": index } as CSSProperties}>
+                <div className="exhibit-frame-image editorial-frame relative aspect-[4/3] overflow-hidden border border-white/15 bg-night shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
+                  <FramedImage draggable={false} className="transition duration-700 group-hover:scale-[1.025]" src={frame.image} alt={frame.title} sizes="(max-width: 768px) 78vw, 52vw" />
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/62 via-transparent to-black/15" />
+                  <div className="film-perforations pointer-events-none absolute inset-x-3 top-2 z-20 h-1.5 opacity-55" aria-hidden="true" />
+                  <span className="absolute left-4 top-4 z-20 border border-white/20 bg-black/55 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan backdrop-blur-md">Frame {String(index + 1).padStart(2, "0")}</span>
+                  <span className="absolute bottom-4 right-4 z-20 text-[0.58rem] font-black uppercase tracking-[0.2em] text-white/55">AJC / 2026</span>
                 </div>
-                <figcaption className="mt-3 flex items-center justify-between gap-4 border-t border-night/20 pt-3 text-sm font-black uppercase tracking-[0.12em] text-night/70">
+                <figcaption className="mt-3 flex items-center justify-between gap-4 border-t border-white/15 pt-3 text-sm font-black uppercase tracking-[0.12em] text-white/65">
                   <span>{frame.title}</span>
-                  <span>View</span>
+                  <span className="text-gold">Selected</span>
                 </figcaption>
               </figure>
             ))}
