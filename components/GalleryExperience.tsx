@@ -27,6 +27,19 @@ export function GalleryExperience() {
   }, []);
 
   useEffect(() => {
+    function handleGalleryFilter(event: Event) {
+      const category = (event as CustomEvent<{ category?: string }>).detail?.category;
+      if (category && categories.includes(category as ProjectCategory | "All")) {
+        setFilter(category as ProjectCategory | "All");
+        setActiveProject(null);
+      }
+    }
+
+    window.addEventListener("ajc:gallery-filter", handleGalleryFilter);
+    return () => window.removeEventListener("ajc:gallery-filter", handleGalleryFilter);
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow = activeProject ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
@@ -60,6 +73,7 @@ export function GalleryExperience() {
               className={`min-h-10 rounded-full border px-4 py-2 transition ${filter === category ? "border-cyan/45 bg-cyan/15 text-ink" : "border-white/15 bg-white/5 text-ink/75 hover:border-cyan/45 hover:text-ink"}`}
               type="button"
               onClick={() => setFilter(category)}
+              aria-pressed={filter === category}
             >
               {category}
             </button>

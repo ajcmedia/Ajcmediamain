@@ -1,6 +1,8 @@
 import type { PortfolioProject, PricingPackage, Service } from "@/types/site";
 
 export const navItems = [
+  { href: "/#experience", label: "Experience" },
+  { href: "/#portals", label: "Portals" },
   { href: "/#services", label: "Services" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#gallery", label: "Gallery" },

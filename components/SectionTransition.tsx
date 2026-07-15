@@ -4,11 +4,33 @@ import { useEffect, useRef, useState } from "react";
 
 type TransitionPhase = "idle" | "cover" | "reveal";
 
-const COVER_DURATION = 170;
-const REVEAL_DURATION = 380;
+type Destination = {
+  code: string;
+  id: string;
+  label: string;
+};
+
+const COVER_DURATION = 920;
+const REVEAL_DURATION = 720;
+
+const destinations: Record<string, Destination> = {
+  top: { code: "00", id: "top", label: "Home" },
+  about: { code: "01", id: "about", label: "About" },
+  experience: { code: "02", id: "experience", label: "Experience" },
+  portals: { code: "03", id: "portals", label: "Gallery Portals" },
+  services: { code: "04", id: "services", label: "Services" },
+  pricing: { code: "05", id: "pricing", label: "Pricing" },
+  editorial: { code: "06", id: "editorial", label: "Editorial Wall" },
+  gallery: { code: "07", id: "gallery", label: "Gallery" },
+  booking: { code: "08", id: "booking", label: "Booking" },
+  contact: { code: "09", id: "contact", label: "Contact" }
+};
+
+const defaultDestination = destinations.top;
 
 export function SectionTransition() {
   const [phase, setPhase] = useState<TransitionPhase>("idle");
+  const [destination, setDestination] = useState<Destination>(defaultDestination);
   const timersRef = useRef<number[]>([]);
   const isTransitioningRef = useRef(false);
   const targetCleanupRef = useRef<(() => void) | null>(null);
@@ -19,16 +41,24 @@ export function SectionTransition() {
       timersRef.current = [];
       targetCleanupRef.current?.();
       targetCleanupRef.current = null;
+      document.body.classList.remove("section-transition-lock");
     }
 
     function jumpToTarget(target: HTMLElement, url: URL) {
       const header = document.querySelector<HTMLElement>("header");
-      const contentAnchor = target.querySelector<HTMLElement>("[data-scroll-anchor]") ?? target;
+      const contentAnchor = Array.from(target.querySelectorAll<HTMLElement>("[data-scroll-anchor]"))
+        .find((anchor) => anchor.getClientRects().length > 0) ?? target;
       const headerHeight = header?.offsetHeight ?? 0;
       const breathingRoom = window.innerWidth < 768 ? 14 : Math.max(10, Math.min(18, window.innerHeight * 0.012));
+      let layoutTop = 0;
+      let layoutNode: HTMLElement | null = contentAnchor;
+      while (layoutNode) {
+        layoutTop += layoutNode.offsetTop;
+        layoutNode = layoutNode.offsetParent as HTMLElement | null;
+      }
       const top = target.id === "top"
         ? 0
-        : Math.max(0, window.scrollY + contentAnchor.getBoundingClientRect().top - headerHeight - breathingRoom);
+        : Math.max(0, layoutTop - headerHeight - breathingRoom);
       const previousScrollBehavior = document.documentElement.style.scrollBehavior;
 
       document.documentElement.style.scrollBehavior = "auto";
@@ -104,6 +134,10 @@ export function SectionTransition() {
         return;
       }
 
+      if (targetId === "gallery") {
+        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { category: "All" } }));
+      }
+
       if (isTransitioningRef.current) {
         event.preventDefault();
         return;
@@ -119,6 +153,13 @@ export function SectionTransition() {
       }
 
       isTransitioningRef.current = true;
+      const fallbackLabel = anchor.dataset.transitionLabel || targetId.replace(/[-_]+/g, " ");
+      setDestination(destinations[targetId] ?? {
+        code: "--",
+        id: targetId,
+        label: fallbackLabel.replace(/\b\w/g, (character) => character.toUpperCase())
+      });
+      document.body.classList.add("section-transition-lock");
       setPhase("cover");
 
       const coverTimer = window.setTimeout(() => {
@@ -128,6 +169,7 @@ export function SectionTransition() {
         const revealTimer = window.setTimeout(() => {
           setPhase("idle");
           isTransitioningRef.current = false;
+          document.body.classList.remove("section-transition-lock");
         }, REVEAL_DURATION);
         timersRef.current.push(revealTimer);
       }, COVER_DURATION);
@@ -135,7 +177,7 @@ export function SectionTransition() {
     }
 
     function handlePortalNavigation(event: Event) {
-      const detail = (event as CustomEvent<{ hash?: string }>).detail;
+      const detail = (event as CustomEvent<{ category?: string; hash?: string }>).detail;
       if (!detail?.hash) {
         return;
       }
@@ -146,6 +188,9 @@ export function SectionTransition() {
       }
       clearTimers();
       jumpToTarget(target, new URL(detail.hash, window.location.href));
+      if (detail.category) {
+        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { category: detail.category } }));
+      }
     }
 
     document.addEventListener("click", handleAnchorClick, true);
@@ -158,10 +203,25 @@ export function SectionTransition() {
   }, []);
 
   return (
-    <div className="section-transition" data-phase={phase} aria-hidden="true">
-      <div className="section-transition-reticle">
-        <span />
+    <>
+      <div className="section-transition" data-phase={phase} data-destination={destination.id} aria-hidden="true">
+        <div className="section-transition-shutters">
+          <span /><span /><span /><span />
+        </div>
+        <div className="section-transition-field" />
+        <div className="section-transition-frame">
+          <i /><i /><i /><i />
+        </div>
+        <div className="section-transition-copy">
+          <span>AJC Media / Destination {destination.code}</span>
+          <strong>{destination.label}</strong>
+          <em>Reframing the view</em>
+        </div>
+        <div className="section-transition-progress"><span /></div>
       </div>
-    </div>
+      <span className="sr-only" role="status" aria-live="polite">
+        {phase === "cover" ? `Opening ${destination.label}` : ""}
+      </span>
+    </>
   );
 }

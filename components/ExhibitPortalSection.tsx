@@ -13,21 +13,24 @@ const portals = [
     label: "Vows, dance floors, details",
     image: "/assets/gallery/wedding-waterfront.png",
     href: "/#gallery",
-    color: "cyan"
+    color: "cyan",
+    filter: "Wedding"
   },
   {
     title: "Events",
     label: "Birthdays, baptisms, showers",
     image: "/assets/gallery/birthday-candles.png",
     href: "/#gallery",
-    color: "gold"
+    color: "gold",
+    filter: "Event"
   },
   {
     title: "Portraits",
     label: "Families, grads, branding",
     image: "/assets/gallery/neon-portrait.png",
     href: "/#gallery",
-    color: "rose"
+    color: "rose",
+    filter: "Portrait"
   }
 ];
 
@@ -100,7 +103,7 @@ export function ExhibitPortalSection() {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) {
-      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery" } }));
+      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", category: portals[index].filter } }));
       return;
     }
 
@@ -109,14 +112,14 @@ export function ExhibitPortalSection() {
     document.body.classList.add("portal-warp-lock");
 
     const navigateTimer = window.setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery" } }));
+      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", category: portals[index].filter } }));
       setWarpPhase("exit");
-    }, 760);
+    }, 1050);
     const finishTimer = window.setTimeout(() => {
       setWarpPhase("idle");
       setWarpPortal(null);
       document.body.classList.remove("portal-warp-lock");
-    }, 1320);
+    }, 1850);
     warpTimersRef.current.push(navigateTimer, finishTimer);
   }
 
@@ -148,7 +151,7 @@ export function ExhibitPortalSection() {
       <div className="portal-stars pointer-events-none absolute inset-0" aria-hidden="true" />
 
       <Reveal>
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
+        <div className="relative z-10 mx-auto max-w-3xl text-center" data-scroll-anchor>
           <p className="eyebrow">Gallery Portals</p>
           <h2 className="text-[clamp(2.25rem,4.7vw,5.2rem)] font-black leading-[0.92] text-ink">Choose a story. Step through the frame.</h2>
           <p className="mx-auto mt-5 max-w-2xl text-[clamp(0.98rem,1.3vw,1.16rem)] leading-relaxed text-ink/68">

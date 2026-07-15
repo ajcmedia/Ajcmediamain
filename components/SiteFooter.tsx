@@ -12,11 +12,12 @@ export function SiteFooter({ adminLabel = "Admin dashboard", adminHref = "/admin
           <SocialLinks />
         </div>
 
-        <FooterColumn title="Services">
-          <Link href="/#services">Wedding stories</Link>
-          <Link href="/#services">Private events</Link>
-          <Link href="/#services">Portrait sessions</Link>
-          <Link href="/#services">Brand content</Link>
+        <FooterColumn title="Explore">
+          <Link href="/#experience">Experience reel</Link>
+          <Link href="/#portals">Gallery portals</Link>
+          <Link href="/#services">Services</Link>
+          <Link href="/#pricing">Pricing</Link>
+          <Link href="/#gallery">Full gallery</Link>
         </FooterColumn>
 
         <FooterColumn title="Studio Info">

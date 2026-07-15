@@ -161,7 +161,7 @@ export function CinematicExperienceSection() {
           {String(activeScene + 1).padStart(2, "0")}
         </div>
         <div className="grid min-h-[calc(100svh-clamp(156px,16svh,208px))] grid-cols-[minmax(320px,0.76fr)_minmax(480px,1.12fr)] items-center gap-[clamp(42px,6vw,92px)]">
-          <div className="flex min-h-0 flex-col justify-center">
+          <div className="flex min-h-0 flex-col justify-center" data-scroll-anchor>
             <p className="eyebrow">Experience Reel</p>
             <h2 className="max-w-[10ch] text-[clamp(2.8rem,4.4vw,5.1rem)] font-black leading-[0.91] tracking-normal text-ink">
               Feel the day before you book it.
@@ -222,7 +222,7 @@ export function CinematicExperienceSection() {
         </div>
       </div>
 
-      <div className="reel-mobile relative z-10 px-[clamp(18px,5vw,44px)] py-[clamp(64px,9vw,92px)]">
+      <div className="reel-mobile relative z-10 px-[clamp(18px,5vw,44px)] py-[clamp(64px,9vw,92px)]" data-scroll-anchor>
         <p className="eyebrow">Experience Reel</p>
         <h2 className="max-w-[11ch] text-[clamp(2.4rem,10vw,4.5rem)] font-black leading-[0.92] tracking-normal text-ink">
           Feel the day before you book it.
