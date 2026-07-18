@@ -12,22 +12,27 @@ import { IntroStrip } from "@/components/IntroStrip";
 import { PageShell } from "@/components/PageShell";
 import { PricingSection } from "@/components/PricingSection";
 import { ServicesSection } from "@/components/ServicesSection";
+import { getSiteContent } from "@/lib/site-content";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const content = await getSiteContent();
+
   return (
     <PageShell>
       <main>
-        <HeroSection />
+        <HeroSection content={content.hero} />
         <IntroStrip />
-        <AboutSection />
-        <CinematicExperienceSection />
-        <ExhibitPortalSection />
-        <ServicesSection />
-        <FeaturedStorySection />
-        <BeforeAfterSection />
-        <PricingSection />
-        <EditorialExhibitSection />
-        <GalleryExperience />
+        <AboutSection content={content.about} />
+        <CinematicExperienceSection content={content.experience} />
+        <ExhibitPortalSection content={content.portals} />
+        <ServicesSection content={content.services} />
+        <FeaturedStorySection content={content.featuredStory} />
+        <BeforeAfterSection content={content.beforeAfter} />
+        <PricingSection content={content.pricing} />
+        <EditorialExhibitSection content={content.editorial} />
+        <GalleryExperience content={content.gallery} />
         <BookingSection />
         <ContactSection />
       </main>

@@ -1,43 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { starterProjects } from "@/data/site";
-import { readLocalStore, writeLocalStore } from "@/lib/localStorage";
-import type { PortfolioProject, ProjectCategory } from "@/types/site";
+import type { PortfolioProject, SiteContent } from "@/types/site";
 import { Reveal } from "@/components/Reveal";
 
-const PROJECT_KEY = "ajcMediaProjects";
-const categories: Array<ProjectCategory | "All"> = ["All", "Wedding", "Event", "Portrait", "Family", "Commercial"];
-
-export function getMergedProjects(projects: PortfolioProject[]) {
-  const projectIds = new Set(projects.map((project) => project.id));
-  return [...projects, ...starterProjects.filter((project) => !projectIds.has(project.id))];
-}
-
-export function GalleryExperience() {
-  const [projects, setProjects] = useState<PortfolioProject[]>(starterProjects);
-  const [filter, setFilter] = useState<ProjectCategory | "All">("All");
+export function GalleryExperience({ content }: { content: SiteContent["gallery"] }) {
+  const projects = content.projects;
+  const categories = useMemo(() => [{ id: "all", label: "All" }, ...content.categories], [content.categories]);
+  const categoryLabels = useMemo(() => new Map(content.categories.map((category) => [category.id, category.label])), [content.categories]);
+  const [filter, setFilter] = useState("all");
   const [activeProject, setActiveProject] = useState<PortfolioProject | null>(null);
 
   useEffect(() => {
-    const storedProjects = readLocalStore<PortfolioProject[]>(PROJECT_KEY, starterProjects);
-    const mergedProjects = getMergedProjects(storedProjects);
-    setProjects(mergedProjects);
-    writeLocalStore(PROJECT_KEY, mergedProjects);
-  }, []);
-
-  useEffect(() => {
     function handleGalleryFilter(event: Event) {
-      const category = (event as CustomEvent<{ category?: string }>).detail?.category;
-      if (category && categories.includes(category as ProjectCategory | "All")) {
-        setFilter(category as ProjectCategory | "All");
+      const categoryId = (event as CustomEvent<{ categoryId?: string }>).detail?.categoryId;
+      if (categoryId && categories.some((category) => category.id === categoryId)) {
+        setFilter(categoryId);
         setActiveProject(null);
       }
     }
 
     window.addEventListener("ajc:gallery-filter", handleGalleryFilter);
     return () => window.removeEventListener("ajc:gallery-filter", handleGalleryFilter);
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     document.body.style.overflow = activeProject ? "hidden" : "";
@@ -47,7 +32,7 @@ export function GalleryExperience() {
   }, [activeProject]);
 
   const visibleProjects = useMemo(
-    () => (filter === "All" ? projects : projects.filter((project) => project.category === filter)),
+    () => projects.filter((project) => project.visible && (filter === "all" || project.categoryId === filter)),
     [filter, projects]
   );
 
@@ -55,12 +40,12 @@ export function GalleryExperience() {
     <section className="section-pad" id="gallery">
       <div data-scroll-anchor>
       <Reveal>
-        <div className="eyebrow">Gallery</div>
+        <div className="eyebrow">{content.eyebrow}</div>
       </Reveal>
       <Reveal>
         <div className="section-heading">
-          <h2 className="section-title">Featured projects with a click-to-view lightbox.</h2>
-          <p className="body-copy">The photographer can add more projects from the admin page. The future backend can hydrate this same component from an API or CMS.</p>
+          <h2 className="section-title">{content.title}</h2>
+          <p className="body-copy">{content.description}</p>
         </div>
       </Reveal>
       </div>
@@ -69,13 +54,13 @@ export function GalleryExperience() {
         <div className="mb-6 flex flex-wrap gap-2.5" role="tablist" aria-label="Gallery filters">
           {categories.map((category) => (
             <button
-              key={category}
-              className={`min-h-10 rounded-full border px-4 py-2 transition ${filter === category ? "border-cyan/45 bg-cyan/15 text-ink" : "border-white/15 bg-white/5 text-ink/75 hover:border-cyan/45 hover:text-ink"}`}
+              key={category.id}
+              className={`min-h-10 rounded-full border px-4 py-2 transition ${filter === category.id ? "border-cyan/45 bg-cyan/15 text-ink" : "border-white/15 bg-white/5 text-ink/75 hover:border-cyan/45 hover:text-ink"}`}
               type="button"
-              onClick={() => setFilter(category)}
-              aria-pressed={filter === category}
+              onClick={() => setFilter(category.id)}
+              aria-pressed={filter === category.id}
             >
-              {category}
+              {category.label}
             </button>
           ))}
         </div>
@@ -91,7 +76,7 @@ export function GalleryExperience() {
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(61,229,255,0.08),transparent_45%)] opacity-80" />
                 </div>
                 <div className="p-6">
-                  <small className="font-black uppercase text-gold">{project.category}</small>
+                  <small className="font-black uppercase text-gold">{categoryLabels.get(project.categoryId) || "Gallery"}</small>
                   <h3 className="mt-2 text-[clamp(1.25rem,2.2vw,2rem)] font-bold leading-none text-ink">{project.title}</h3>
                   <p className="mt-3 body-copy">{project.description}</p>
                 </div>

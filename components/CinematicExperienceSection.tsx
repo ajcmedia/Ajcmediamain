@@ -2,35 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FramedImage } from "@/components/FramedImage";
+import type { SiteContent } from "@/types/site";
 
-const scenes = [
-  {
-    label: "Scene 01",
-    title: "The anticipation",
-    copy: "Soft details, quiet nerves, and the first frames that set the emotional tone.",
-    image: "/assets/gallery/wedding-details.png"
-  },
-  {
-    label: "Scene 02",
-    title: "The moment opens",
-    copy: "Movement, reactions, and the real atmosphere of the day captured without feeling staged.",
-    image: "/assets/gallery/wedding-waterfront.png"
-  },
-  {
-    label: "Scene 03",
-    title: "The room comes alive",
-    copy: "Color, music, candlelight, family energy, and the images that make the night feel vivid again.",
-    image: "/assets/gallery/reception-dance.png"
-  },
-  {
-    label: "Scene 04",
-    title: "The final gallery",
-    copy: "A polished story delivered as a complete visual memory, from raw light to finished emotion.",
-    image: "/assets/gallery/rain-engagement.png"
-  }
-];
-
-export function CinematicExperienceSection() {
+export function CinematicExperienceSection({ content }: { content: SiteContent["experience"] }) {
+  const scenes = content.scenes;
   const sectionRef = useRef<HTMLElement>(null);
   const desktopStageRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);
@@ -162,12 +137,12 @@ export function CinematicExperienceSection() {
         </div>
         <div className="grid min-h-[calc(100svh-clamp(156px,16svh,208px))] grid-cols-[minmax(320px,0.76fr)_minmax(480px,1.12fr)] items-center gap-[clamp(42px,6vw,92px)]">
           <div className="flex min-h-0 flex-col justify-center" data-scroll-anchor>
-            <p className="eyebrow">Experience Reel</p>
+            <p className="eyebrow">{content.eyebrow}</p>
             <h2 className="max-w-[10ch] text-[clamp(2.8rem,4.4vw,5.1rem)] font-black leading-[0.91] tracking-normal text-ink">
-              Feel the day before you book it.
+              {content.title}
             </h2>
             <p className="mt-5 max-w-[560px] text-[clamp(1rem,1.2vw,1.16rem)] leading-relaxed text-ink/68">
-              A four-scene cut from quiet detail to final delivery. Scroll at your own pace; every beat has room to land.
+              {content.description}
             </p>
 
             <div className="reel-chapter-list mt-[clamp(24px,4vh,42px)] border-l border-white/15">
@@ -223,12 +198,12 @@ export function CinematicExperienceSection() {
       </div>
 
       <div className="reel-mobile relative z-10 px-[clamp(18px,5vw,44px)] py-[clamp(64px,9vw,92px)]" data-scroll-anchor>
-        <p className="eyebrow">Experience Reel</p>
+        <p className="eyebrow">{content.eyebrow}</p>
         <h2 className="max-w-[11ch] text-[clamp(2.4rem,10vw,4.5rem)] font-black leading-[0.92] tracking-normal text-ink">
-          Feel the day before you book it.
+          {content.title}
         </h2>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-ink/68">
-          Swipe through four moments. On touch screens, the story stays in your hands instead of being tied to the page scroll.
+          {content.description}
         </p>
 
         <div className="mt-7 flex items-center justify-between border-y border-white/10 py-3 text-xs font-black uppercase tracking-[0.16em] text-white/45">

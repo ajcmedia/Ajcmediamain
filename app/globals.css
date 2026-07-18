@@ -318,6 +318,22 @@ textarea {
 
   .form-control {
     @apply min-h-12 w-full border border-white/15 bg-white/[0.075] px-3.5 py-3 text-ink outline-none focus:border-cyan/70 focus:ring-4 focus:ring-cyan/15;
+    color-scheme: dark;
+  }
+
+  select.form-control option,
+  select.form-control optgroup {
+    background-color: #0b1521;
+    color: #f2f7fb;
+  }
+
+  select.form-control option:checked {
+    background-color: #16374a;
+    color: #ffffff;
+  }
+
+  select.form-control option:disabled {
+    color: #81909e;
   }
 }
 

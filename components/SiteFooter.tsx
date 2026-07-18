@@ -27,8 +27,8 @@ export function SiteFooter({ adminLabel = "Admin dashboard", adminHref = "/admin
         </FooterColumn>
 
         <FooterColumn title="Contact">
-          <a href="mailto:hello@ajcmedia.ca">hello@ajcmedia.ca</a>
-          <a href="tel:+16045550188">(604) 555-0188</a>
+          <a href="mailto:hello@ajcmedia.ca">ajcmedia888@gmail.com</a>
+          <a href="tel:+16045550188">(778) 883-4378</a>
           <Link href="/#booking">Request availability</Link>
         </FooterColumn>
       </div>

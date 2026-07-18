@@ -6,25 +6,21 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { FramedImage } from "@/components/FramedImage";
 import { CalendarIcon, GalleryIcon } from "@/components/Icons";
 import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
+import type { SiteContent } from "@/types/site";
 
-const showcaseFrames = [
-  { image: "/assets/gallery/reception-dance.png", alt: "Wedding reception photography sample", className: "showcase-main", priority: true },
-  { image: "/assets/gallery/wedding-waterfront.png", alt: "Waterfront wedding photography sample", className: "showcase-card-a" },
-  { image: "/assets/gallery/family-park.png", alt: "Family photography sample", className: "showcase-card-b" },
-  { image: "/assets/gallery/corporate-branding.png", alt: "Brand portrait photography sample", className: "showcase-card-c" }
-];
+const showcaseClasses = ["showcase-main", "showcase-card-a", "showcase-card-b", "showcase-card-c"];
 
-export function HeroSection() {
+export function HeroSection({ content }: { content: SiteContent["hero"] }) {
   const heroRef = useRef<HTMLElement>(null);
   const [selectedFrame, setSelectedFrame] = useState(0);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setSelectedFrame((current) => (current + 1) % showcaseFrames.length);
+      setSelectedFrame((current) => (current + 1) % content.showcaseFrames.length);
     }, 2400);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [content.showcaseFrames.length]);
 
   useEffect(() => {
     let context: { revert: () => void } | undefined;
@@ -73,7 +69,7 @@ export function HeroSection() {
   return (
     <section ref={heroRef} onPointerMove={handlePointerMove} className="relative grid min-h-[94svh] overflow-hidden px-[clamp(18px,5vw,70px)] pb-12 pt-28" id="top" aria-label="AJC Media hero">
       <div className="hero-bg absolute inset-0" aria-hidden="true">
-        <Image className="h-full w-full scale-[1.04] object-cover" src="/assets/gallery/hero-lens.png" alt="" fill priority sizes="100vw" />
+        <Image className="h-full w-full scale-[1.04] object-cover" src={content.backgroundImage} alt="" fill priority sizes="100vw" />
         <WebGLAtmosphere variant="hero" className="z-[1] opacity-35 mix-blend-screen" />
         <div className="absolute inset-x-0 -top-1/4 h-[22%] animate-scan bg-gradient-to-b from-transparent via-cyan/20 to-transparent" />
         <div className="focus-field absolute inset-0 opacity-85" />
@@ -122,27 +118,27 @@ export function HeroSection() {
 
         <div className="relative min-h-[390px] sm:min-h-[470px] lg:min-h-[clamp(500px,62vh,690px)]">
           <div className="absolute inset-[15%_7%_13%_9%] z-20 animate-focusPulse border border-cyan/25" aria-hidden="true" />
-          {showcaseFrames.map((frame, index) => (
+          {content.showcaseFrames.map((frame, index) => (
             <ShowcaseCard
-              key={frame.image}
-              className={`${frame.className} ${index % 2 === 0 ? "animate-heroFloat" : "animate-heroFloatReverse"}`}
+              key={frame.id}
+              className={`${showcaseClasses[index]} ${index % 2 === 0 ? "animate-heroFloat" : "animate-heroFloatReverse"}`}
               image={frame.image}
               alt={frame.alt}
               selected={selectedFrame === index}
-              priority={frame.priority}
+              priority={index === 0}
               onFocus={() => setSelectedFrame(index)}
             />
           ))}
           <div className="absolute bottom-0 left-[7%] right-[5%] z-30 flex animate-stripDrift gap-2.5 opacity-80">
-            {["baby-shower.png", "neon-portrait.png", "graduation-family.png", "forest-engagement.png"].map((image, index) => (
+            {content.thumbnailFrames.map((frame, index) => (
               <button
-                key={image}
+                key={frame.id}
                 className={`relative aspect-[4/3] min-w-[28%] overflow-hidden border bg-night transition ${selectedFrame === index ? "border-cyan shadow-[0_0_28px_rgba(61,229,255,0.3)]" : "border-white/20"}`}
                 type="button"
                 aria-label={`Focus portfolio frame ${index + 1}`}
                 onClick={() => setSelectedFrame(index)}
               >
-                <FramedImage src={`/assets/gallery/${image}`} alt="" sizes="(max-width: 1024px) 28vw, 180px" />
+                <FramedImage src={frame.image} alt={frame.alt} sizes="(max-width: 1024px) 28vw, 180px" />
                 {selectedFrame === index ? <div className="absolute inset-2 border border-cyan/80" /> : null}
               </button>
             ))}

@@ -135,7 +135,7 @@ export function SectionTransition() {
       }
 
       if (targetId === "gallery") {
-        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { category: "All" } }));
+        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { categoryId: "all" } }));
       }
 
       if (isTransitioningRef.current) {
@@ -177,7 +177,7 @@ export function SectionTransition() {
     }
 
     function handlePortalNavigation(event: Event) {
-      const detail = (event as CustomEvent<{ category?: string; hash?: string }>).detail;
+      const detail = (event as CustomEvent<{ categoryId?: string; hash?: string }>).detail;
       if (!detail?.hash) {
         return;
       }
@@ -188,8 +188,8 @@ export function SectionTransition() {
       }
       clearTimers();
       jumpToTarget(target, new URL(detail.hash, window.location.href));
-      if (detail.category) {
-        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { category: detail.category } }));
+      if (detail.categoryId) {
+        window.dispatchEvent(new CustomEvent("ajc:gallery-filter", { detail: { categoryId: detail.categoryId } }));
       }
     }
 

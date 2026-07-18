@@ -3,9 +3,10 @@
 import { FramedImage } from "@/components/FramedImage";
 import { ServiceIcon } from "@/components/Icons";
 import { Reveal } from "@/components/Reveal";
-import { services } from "@/data/site";
+import type { SiteContent } from "@/types/site";
 
-export function ServicesSection() {
+export function ServicesSection({ content }: { content: SiteContent["services"] }) {
+  const services = content.items;
   function handlePointerMove(event: React.PointerEvent<HTMLElement>) {
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
       return;
@@ -42,7 +43,7 @@ export function ServicesSection() {
       </div>
       <div className="service-deck grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {services.map((service, index) => (
-          <Reveal key={service.title} delay={index * 80}>
+          <Reveal key={service.id} delay={index * 80}>
             <article
               className="service-card group relative min-h-[390px] overflow-hidden border border-white/15 bg-[rgba(9,15,25,0.78)] shadow-glow"
               data-service={String(index + 1).padStart(2, "0")}

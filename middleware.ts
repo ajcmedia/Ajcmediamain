@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const fallbackAdminPassword = "michaelchuabading123";
-const adminPassword = process.env.ADMIN_PASSWORD || fallbackAdminPassword;
-const adminSessionToken = process.env.ADMIN_SESSION_TOKEN || `ajc-admin-${adminPassword}`;
+const adminSessionToken = process.env.ADMIN_SESSION_TOKEN;
 const adminCookieName = "ajc_admin_session";
 
 export function middleware(request: NextRequest) {
@@ -45,11 +43,23 @@ function requiresAdminAuth(request: NextRequest) {
     return request.method !== "GET";
   }
 
+  if (pathname.startsWith("/api/site-content")) {
+    return request.method !== "GET";
+  }
+
+  if (pathname.startsWith("/api/media")) {
+    return request.method !== "GET";
+  }
+
+  if (pathname.startsWith("/api/admin/logout")) {
+    return true;
+  }
+
   return false;
 }
 
 function hasValidAdminAuth(request: NextRequest) {
-  return request.cookies.get(adminCookieName)?.value === adminSessionToken;
+  return Boolean(adminSessionToken) && request.cookies.get(adminCookieName)?.value === adminSessionToken;
 }
 
 export const config = {

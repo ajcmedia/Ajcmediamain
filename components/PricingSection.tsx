@@ -1,19 +1,19 @@
 import { ButtonLink } from "@/components/ButtonLink";
-import { pricingPackages } from "@/data/site";
+import type { SiteContent } from "@/types/site";
 
-export function PricingSection() {
+export function PricingSection({ content }: { content: SiteContent["pricing"] }) {
   return (
     <section className="section-pad bg-[linear-gradient(90deg,rgba(255,189,115,0.08),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.035),transparent)]" id="pricing">
       <div data-scroll-anchor>
-      <div className="eyebrow">Pricing</div>
+      <div className="eyebrow">{content.eyebrow}</div>
       <div className="section-heading">
-        <h2 className="section-title">Simple starting points for a sales-ready conversation.</h2>
-        <p className="body-copy">These starting packages make it easy to choose a direction, then refine coverage based on the event, location, and final deliverables.</p>
+        <h2 className="section-title">{content.title}</h2>
+        <p className="body-copy">{content.description}</p>
       </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
-        {pricingPackages.map((item) => (
-          <article key={item.label} className={`glass-panel flex flex-col p-7 ${item.featured ? "border-cyan/50 lg:-translate-y-4" : ""}`}>
+        {content.packages.map((item) => (
+          <article key={item.id} className={`glass-panel flex flex-col p-7 ${item.featured ? "border-cyan/50 lg:-translate-y-4" : ""}`}>
             <p className="mb-3 text-sm font-black uppercase text-cyan">{item.label}</p>
             <h3 className="text-[clamp(2.2rem,4.2vw,3.9rem)] font-bold leading-none text-ink">{item.price}</h3>
             <p className="mt-5 body-copy">{item.description}</p>

@@ -3,41 +3,12 @@
 import { useRef, useState } from "react";
 import { FramedImage } from "@/components/FramedImage";
 import { Reveal } from "@/components/Reveal";
+import type { SiteContent } from "@/types/site";
 
-const storyFrames = [
-  {
-    chapter: "Chapter 01 / Details",
-    eyebrow: "The quiet setup",
-    title: "Details before the aisle.",
-    copy: "Rings, florals, fabric, and the small decisions that establish the visual language of the day.",
-    image: "/assets/gallery/wedding-details.png"
-  },
-  {
-    chapter: "Chapter 02 / Portraits",
-    eyebrow: "A sense of place",
-    title: "Portraits with room to breathe.",
-    copy: "A waterfront pause that keeps the couple, the light, and the city connected in one complete frame.",
-    image: "/assets/gallery/wedding-waterfront.png"
-  },
-  {
-    chapter: "Chapter 03 / Reception",
-    eyebrow: "The room ignites",
-    title: "Energy after the vows.",
-    copy: "Fast movement, changing light, and real reactions captured without losing the atmosphere of the room.",
-    image: "/assets/gallery/reception-dance.png"
-  },
-  {
-    chapter: "Chapter 04 / In between",
-    eyebrow: "A quiet exhale",
-    title: "The frames between the big ones.",
-    copy: "Unscripted movement and soft pauses give the final gallery its pacing, honesty, and emotional texture.",
-    image: "/assets/gallery/forest-engagement.png"
-  }
-];
-
-export function FeaturedStorySection() {
+export function FeaturedStorySection({ content }: { content: SiteContent["featuredStory"] }) {
+  const storyFrames = content.frames;
   const stageRef = useRef<HTMLButtonElement>(null);
-  const [activeFrame, setActiveFrame] = useState(2);
+  const [activeFrame, setActiveFrame] = useState(Math.min(2, storyFrames.length - 1));
 
   function handleStagePointerMove(event: React.PointerEvent<HTMLButtonElement>) {
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
@@ -58,10 +29,10 @@ export function FeaturedStorySection() {
       <Reveal>
         <div className="section-heading relative z-10">
           <div>
-            <div className="eyebrow">Featured Story / Interactive cut</div>
-            <h2 className="section-title">One wedding day, told like a cinematic magazine spread.</h2>
+            <div className="eyebrow">{content.eyebrow}</div>
+            <h2 className="section-title">{content.title}</h2>
           </div>
-          <p className="body-copy">Choose a frame—or tap the main image to move forward—and watch the editorial spread recompose around that moment.</p>
+          <p className="body-copy">{content.description}</p>
         </div>
       </Reveal>
 
@@ -76,7 +47,7 @@ export function FeaturedStorySection() {
             aria-label={`Currently showing ${storyFrames[activeFrame].title}. Show next story frame.`}
           >
             {storyFrames.map((frame, index) => (
-              <div key={frame.image} className="story-stage-frame absolute inset-0" data-active={activeFrame === index} aria-hidden={activeFrame !== index}>
+              <div key={frame.id} className="story-stage-frame absolute inset-0" data-active={activeFrame === index} aria-hidden={activeFrame !== index}>
                 <FramedImage className="story-stage-image transition duration-1000" src={frame.image} alt={frame.title} sizes="(max-width: 1024px) 100vw, 64vw" />
               </div>
             ))}
@@ -94,7 +65,7 @@ export function FeaturedStorySection() {
 
         <div className="story-selector grid gap-3" role="list" aria-label="Choose a story frame">
           {storyFrames.map((frame, index) => (
-            <Reveal key={frame.image} delay={index * 70}>
+            <Reveal key={frame.id} delay={index * 70}>
               <button
                 className="story-choice group grid w-full grid-cols-[96px_1fr_auto] items-center gap-4 overflow-hidden border border-white/15 bg-white/[0.035] p-3 text-left transition"
                 type="button"

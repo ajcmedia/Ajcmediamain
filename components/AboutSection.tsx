@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Reveal } from "@/components/Reveal";
+import type { SiteContent } from "@/types/site";
 
 const approachCards = [
   {
@@ -20,7 +21,7 @@ const approachCards = [
   }
 ];
 
-export function AboutSection() {
+export function AboutSection({ content }: { content: SiteContent["about"] }) {
   return (
     <section id="about" className="section-pad scroll-mt-24 border-y border-white/10 bg-[linear-gradient(135deg,rgba(61,229,255,0.06),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent)]">
       <div data-scroll-anchor className="grid items-center gap-[clamp(28px,5vw,68px)] lg:grid-cols-[minmax(0,0.88fr)_minmax(320px,0.62fr)]">
@@ -39,7 +40,7 @@ export function AboutSection() {
 
         <Reveal className="lg:justify-self-end" delay={120}>
           <div className="relative mx-auto w-full max-w-[min(88vw,420px)] overflow-hidden border border-white/15 bg-night shadow-glow lg:mx-0 xl:max-w-[460px]">
-            <Image className="h-auto w-full" src="/assets/brand/jayson-photo.jpg" alt="Jayson of AJC Media" width={768} height={1024} sizes="(max-width: 1024px) 88vw, 420px" priority />
+            <Image className="h-auto w-full" src={content.portraitImage} alt={content.portraitAlt} width={768} height={1024} sizes="(max-width: 1024px) 88vw, 420px" priority />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5" />
             <div className="absolute bottom-5 left-5 border border-white/15 bg-night/80 px-3.5 py-3 text-sm font-black uppercase text-cyan">
               AJC / Vancouver / Photo

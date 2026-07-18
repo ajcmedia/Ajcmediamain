@@ -5,21 +5,10 @@ import { useEffect, useRef } from "react";
 import { FramedImage } from "@/components/FramedImage";
 import { Reveal } from "@/components/Reveal";
 import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
+import type { SiteContent } from "@/types/site";
 
-const exhibitFrames = [
-  { title: "Reception Dance Energy", image: "/assets/gallery/reception-dance.png" },
-  { title: "Waterfront Wedding Glow", image: "/assets/gallery/wedding-waterfront.png" },
-  { title: "Studio Family Legacy", image: "/assets/gallery/studio-family.png" },
-  { title: "Graduation Day Portraits", image: "/assets/gallery/graduation-family.png" },
-  { title: "Rain Street Engagement", image: "/assets/gallery/rain-engagement.png" },
-  { title: "Local Brand Content", image: "/assets/gallery/commercial-cafe.png" },
-  { title: "Baptism Family Gathering", image: "/assets/gallery/baptism-church.png" },
-  { title: "Wedding Detail Flatlay", image: "/assets/gallery/wedding-details.png" }
-];
-
-const introWords = "A curated photo wall gives visitors the feeling of stepping inside a private exhibit before they open the full gallery.";
-
-export function EditorialExhibitSection() {
+export function EditorialExhibitSection({ content }: { content: SiteContent["editorial"] }) {
+  const exhibitFrames = content.frames;
   const sectionRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -191,10 +180,10 @@ export function EditorialExhibitSection() {
         <div className="relative z-10">
         <Reveal>
           <div className="mx-auto mt-10 max-w-3xl text-center">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan">Editorial Wall</p>
-            <h2 className="editorial-title mt-4 text-[clamp(2.2rem,4.1vw,4.6rem)] font-black leading-[0.94] text-ink">An illuminated archive of real moments.</h2>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan">{content.eyebrow}</p>
+            <h2 className="editorial-title mt-4 text-[clamp(2.2rem,4.1vw,4.6rem)] font-black leading-[0.94] text-ink">{content.title}</h2>
             <p className="editorial-copy mt-5 text-bloom text-lg leading-relaxed text-ink/62">
-              {introWords.split(" ").map((word, index) => (
+              {content.description.split(" ").map((word, index) => (
                 <span key={`${word}-${index}`} style={{ animationDelay: `${index * 45}ms` }}>{word} </span>
               ))}
             </p>
@@ -238,7 +227,7 @@ export function EditorialExhibitSection() {
             onPointerLeave={stopRailDrag}
           >
             {exhibitFrames.map((frame, index) => (
-              <figure key={frame.title} className="exhibit-frame group shrink-0 snap-center" style={{ "--frame-index": index } as CSSProperties}>
+              <figure key={frame.id} className="exhibit-frame group shrink-0 snap-center" style={{ "--frame-index": index } as CSSProperties}>
                 <div className="exhibit-frame-image editorial-frame relative aspect-[4/3] overflow-hidden border border-white/15 bg-night shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
                   <FramedImage draggable={false} className="transition duration-700 group-hover:scale-[1.025]" src={frame.image} alt={frame.title} sizes="(max-width: 768px) 78vw, 52vw" />
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/62 via-transparent to-black/15" />

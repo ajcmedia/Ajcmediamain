@@ -1,33 +1,66 @@
 import { NextResponse } from "next/server";
-import { createId, memoryStore } from "@/lib/api-placeholders";
-import type { BookingRequest } from "@/types/site";
+import { sendBookingNotification } from "@/lib/booking-email";
+import { createBooking, listBookings, markBookingEmailSent } from "@/lib/bookings";
+import { DatabaseConfigurationError } from "@/lib/mongodb";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({ bookings: memoryStore.bookings });
+  try {
+    return NextResponse.json({ bookings: await listBookings() });
+  } catch (error) {
+    return databaseError(error);
+  }
 }
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as Omit<BookingRequest, "id" | "createdAt">;
-  const requiredFields = [payload.name, payload.email, payload.type, payload.date, payload.budget, payload.message];
-
-  if (requiredFields.some((field) => !field?.trim())) {
-    return NextResponse.json({ error: "Missing required booking fields." }, { status: 400 });
+  const payload = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!payload) {
+    return NextResponse.json({ error: "Invalid booking request." }, { status: 400 });
   }
 
-  const booking: BookingRequest = {
-    id: createId("booking"),
-    createdAt: new Date().toISOString(),
-    name: payload.name,
-    email: payload.email,
-    phone: payload.phone,
-    type: payload.type,
-    date: payload.date,
-    budget: payload.budget,
-    message: payload.message
+  const fields = {
+    name: stringValue(payload.name),
+    email: stringValue(payload.email),
+    phone: stringValue(payload.phone),
+    type: stringValue(payload.type),
+    date: stringValue(payload.date),
+    budget: stringValue(payload.budget),
+    message: stringValue(payload.message)
   };
 
-  // Temporary live bridge: this keeps the API contract ready while MongoDB
-  // and email delivery credentials are still pending.
-  memoryStore.bookings.unshift(booking);
-  return NextResponse.json({ booking }, { status: 201 });
+  if (!fields.name || !fields.email || !fields.type || !fields.date || !fields.budget || !fields.message) {
+    return NextResponse.json({ error: "Missing required booking fields." }, { status: 400 });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(fields.email) || fields.email.length > 254) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+  if (fields.message.length > 5_000 || Object.values(fields).some((value) => value.length > 5_000)) {
+    return NextResponse.json({ error: "Booking request is too long." }, { status: 400 });
+  }
+
+  try {
+    let booking = await createBooking(fields);
+    const emailSent = await sendBookingNotification(booking);
+    if (emailSent) {
+      await markBookingEmailSent(booking.id);
+      booking = { ...booking, emailSent: true };
+    }
+    return NextResponse.json({ booking }, { status: 201 });
+  } catch (error) {
+    return databaseError(error);
+  }
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function databaseError(error: unknown) {
+  if (error instanceof DatabaseConfigurationError) {
+    return NextResponse.json({ error: error.message }, { status: 503 });
+  }
+  console.error("Booking API error", error);
+  return NextResponse.json({ error: "The booking service is temporarily unavailable." }, { status: 500 });
 }

@@ -6,35 +6,10 @@ import { FramedImage } from "@/components/FramedImage";
 import { PortalWarpCanvas } from "@/components/PortalWarpCanvas";
 import { Reveal } from "@/components/Reveal";
 import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
+import type { SiteContent } from "@/types/site";
 
-const portals = [
-  {
-    title: "Wedding",
-    label: "Vows, dance floors, details",
-    image: "/assets/gallery/wedding-waterfront.png",
-    href: "/#gallery",
-    color: "cyan",
-    filter: "Wedding"
-  },
-  {
-    title: "Events",
-    label: "Birthdays, baptisms, showers",
-    image: "/assets/gallery/birthday-candles.png",
-    href: "/#gallery",
-    color: "gold",
-    filter: "Event"
-  },
-  {
-    title: "Portraits",
-    label: "Families, grads, branding",
-    image: "/assets/gallery/neon-portrait.png",
-    href: "/#gallery",
-    color: "rose",
-    filter: "Portrait"
-  }
-];
-
-export function ExhibitPortalSection() {
+export function ExhibitPortalSection({ content }: { content: SiteContent["portals"] }) {
+  const portals = content.items;
   const sectionRef = useRef<HTMLElement>(null);
   const warpTimersRef = useRef<number[]>([]);
   const [hoveredPortal, setHoveredPortal] = useState<number | null>(null);
@@ -103,7 +78,7 @@ export function ExhibitPortalSection() {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) {
-      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", category: portals[index].filter } }));
+      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", categoryId: portals[index].categoryId } }));
       return;
     }
 
@@ -112,7 +87,7 @@ export function ExhibitPortalSection() {
     document.body.classList.add("portal-warp-lock");
 
     const navigateTimer = window.setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", category: portals[index].filter } }));
+      window.dispatchEvent(new CustomEvent("ajc:portal-navigate", { detail: { hash: "#gallery", categoryId: portals[index].categoryId } }));
       setWarpPhase("exit");
     }, 1050);
     const finishTimer = window.setTimeout(() => {
@@ -152,22 +127,22 @@ export function ExhibitPortalSection() {
 
       <Reveal>
         <div className="relative z-10 mx-auto max-w-3xl text-center" data-scroll-anchor>
-          <p className="eyebrow">Gallery Portals</p>
-          <h2 className="text-[clamp(2.25rem,4.7vw,5.2rem)] font-black leading-[0.92] text-ink">Choose a story. Step through the frame.</h2>
+          <p className="eyebrow">{content.eyebrow}</p>
+          <h2 className="text-[clamp(2.25rem,4.7vw,5.2rem)] font-black leading-[0.92] text-ink">{content.title}</h2>
           <p className="mx-auto mt-5 max-w-2xl text-[clamp(0.98rem,1.3vw,1.16rem)] leading-relaxed text-ink/68">
-            Each portal opens the same gallery from a different emotional doorway—celebration, connection, or character.
+            {content.description}
           </p>
         </div>
       </Reveal>
 
       <div className="relative z-10 mx-auto mt-[clamp(38px,6vw,72px)] grid max-w-6xl gap-5 perspective-1000 md:grid-cols-3">
         {portals.map((portal, index) => (
-          <Reveal key={portal.title} delay={index * 100}>
+          <Reveal key={portal.id} delay={index * 100}>
             <Link
               className="portal-card group relative block aspect-[4/5] overflow-hidden border border-white/15 bg-night shadow-glow"
               data-color={portal.color}
               data-portal-link
-              href={portal.href}
+              href="/#gallery"
               onClick={(event) => enterPortal(event, index)}
               onPointerEnter={() => setHoveredPortal(index)}
               onPointerMove={handleCardPointerMove}

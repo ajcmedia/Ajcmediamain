@@ -1,10 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { readLocalStore, writeLocalStore } from "@/lib/localStorage";
-import type { BookingRequest } from "@/types/site";
-
-const BOOKING_KEY = "ajcMediaBookings";
 
 export function BookingSection() {
   const [status, setStatus] = useState("");
@@ -32,24 +28,15 @@ export function BookingSection() {
         body: JSON.stringify(payload)
       });
 
+      const result = (await response.json()) as { error?: string };
       if (!response.ok) {
-        throw new Error("Booking request failed.");
+        throw new Error(result.error || "Booking request failed.");
       }
 
-      const data = (await response.json()) as { booking: BookingRequest };
-      writeLocalStore(BOOKING_KEY, [data.booking, ...readLocalStore<BookingRequest[]>(BOOKING_KEY, [])]);
       form.reset();
       setStatus("Booking request received. AJC Media will follow up with availability.");
-    } catch {
-      const fallbackBooking: BookingRequest = {
-        id: `booking-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        ...payload
-      };
-
-      writeLocalStore(BOOKING_KEY, [fallbackBooking, ...readLocalStore<BookingRequest[]>(BOOKING_KEY, [])]);
-      form.reset();
-      setStatus("Request saved locally. Email and database delivery can be connected next.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "The request could not be sent. Please try again.");
     }
   }
 
