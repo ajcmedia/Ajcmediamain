@@ -127,6 +127,9 @@ export function validateSiteContent(input: unknown): { content?: SiteContent; er
   });
   content.pricing.packages.forEach((item, index) => {
     if (![item.id, item.label, item.price, item.description].every(isNonEmptyString) || !item.features.length || item.features.some((feature) => !isNonEmptyString(feature))) errors.push(`Pricing package ${index + 1} has an empty required field.`);
+    if (item.description.length > 280) errors.push(`Pricing package ${index + 1} description must be 280 characters or fewer.`);
+    if (item.features.length > 8) errors.push(`Pricing package ${index + 1} can contain up to 8 bullet points.`);
+    if (item.features.some((feature) => feature.length > 120)) errors.push(`Pricing package ${index + 1} bullet points must be 120 characters or fewer.`);
   });
   content.editorial.frames.forEach((item, index) => {
     if (![item.id, item.title].every(isNonEmptyString)) errors.push(`Editorial Wall frame ${index + 1} has an empty required field.`);
@@ -180,6 +183,26 @@ export function validateSiteContent(input: unknown): { content?: SiteContent; er
     errors.push("Every image must be an uploaded image path.");
   }
 
+  const imagePositions = [
+    content.hero.backgroundPosition,
+    content.about.portraitPosition,
+    content.beforeAfter.position,
+    ...content.hero.showcaseFrames.map((item) => item.position),
+    ...content.hero.thumbnailFrames.map((item) => item.position),
+    ...content.experience.scenes.map((item) => item.position),
+    ...content.portals.items.map((item) => item.position),
+    ...content.services.items.map((item) => item.position),
+    ...content.featuredStory.frames.map((item) => item.position),
+    ...content.editorial.frames.map((item) => item.position),
+    ...content.gallery.projects.map((item) => item.position)
+  ];
+  if (imagePositions.some((position) => position !== undefined && !isImagePosition(position))) {
+    errors.push("Image framing positions must stay between 0 and 100 percent, with zoom between 100 and 300 percent.");
+  }
+  if (content.gallery.projects.some((project) => project.cropAspect !== undefined && !["original", "landscape", "square", "portrait"].includes(project.cropAspect))) {
+    errors.push("A Gallery project has an invalid crop shape.");
+  }
+
   if (errors.length) {
     return { errors };
   }
@@ -200,4 +223,11 @@ function isNonEmptyString(value: unknown): value is string {
 
 function isImageReference(value: unknown): value is string {
   return typeof value === "string" && value.length <= 2_048 && /^\/(?!\/)/.test(value);
+}
+
+function isImagePosition(value: unknown) {
+  if (!isRecord(value)) return false;
+  const coordinatesAreValid = [value.x, value.y].every((coordinate) => typeof coordinate === "number" && Number.isFinite(coordinate) && coordinate >= 0 && coordinate <= 100);
+  const zoomIsValid = value.zoom === undefined || (typeof value.zoom === "number" && Number.isFinite(value.zoom) && value.zoom >= 1 && value.zoom <= 3);
+  return coordinatesAreValid && zoomIsValid;
 }

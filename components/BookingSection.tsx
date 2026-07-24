@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 
 export function BookingSection() {
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,16 +20,19 @@ export function BookingSection() {
       message: String(data.get("message") || "")
     };
 
+    setIsSubmitting(true);
     setStatus("Sending request...");
 
     try {
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
         body: JSON.stringify(payload)
       });
 
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
         throw new Error(result.error || "Booking request failed.");
       }
@@ -37,6 +41,8 @@ export function BookingSection() {
       setStatus("Booking request received. AJC Media will follow up with availability.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "The request could not be sent. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -81,7 +87,7 @@ export function BookingSection() {
         <FormLabel className="md:col-span-2" label="Message">
           <textarea className="form-control min-h-32 resize-y" name="message" rows={5} placeholder="Tell us the location, guest count, and the moments that matter most." required />
         </FormLabel>
-        <button className="pill-button pill-button-primary md:col-span-2" type="submit">Send booking request</button>
+        <button className="pill-button pill-button-primary md:col-span-2 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isSubmitting}>{isSubmitting ? "Sending request..." : "Send booking request"}</button>
         <p className="min-h-6 text-green md:col-span-2" role="status">{status}</p>
       </form>
     </section>

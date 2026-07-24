@@ -174,7 +174,7 @@ export function CinematicExperienceSection({ content }: { content: SiteContent["
             <div className="absolute inset-0 overflow-hidden border border-white/15 bg-black shadow-[0_0_110px_rgba(61,229,255,0.15)]">
               {scenes.map((scene, index) => (
                 <div key={scene.title} className="reel-frame absolute inset-0" data-active={activeScene === index} aria-hidden={activeScene !== index}>
-                  <FramedImage src={scene.image} alt={scene.title} sizes="(max-width: 1280px) 56vw, 860px" />
+                  <FramedImage src={scene.image} alt={scene.title} position={scene.position} sizes="(max-width: 1280px) 56vw, 860px" />
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/68 via-transparent to-black/20" />
                   <div className="absolute bottom-7 left-7 z-20 max-w-md">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-gold">Now viewing / {scene.label}</p>
@@ -219,7 +219,7 @@ export function CinematicExperienceSection({ content }: { content: SiteContent["
           {scenes.map((scene, index) => (
             <article key={scene.label} data-reel-card={index} className="w-[84vw] max-w-[440px] shrink-0 snap-center overflow-hidden border border-white/15 bg-white/[0.035] shadow-glow">
               <div className="relative aspect-[4/5] overflow-hidden bg-black">
-                <FramedImage src={scene.image} alt={scene.title} sizes="(max-width: 1023px) 84vw, 440px" />
+                <FramedImage src={scene.image} alt={scene.title} position={scene.position} sizes="(max-width: 1023px) 84vw, 440px" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/64 via-transparent to-black/10" />
                 <span className="absolute left-4 top-4 border border-cyan/35 bg-night/75 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.16em] text-cyan backdrop-blur-md">
                   {scene.label}

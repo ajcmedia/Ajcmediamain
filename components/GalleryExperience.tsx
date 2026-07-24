@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PortfolioProject, SiteContent } from "@/types/site";
 import { Reveal } from "@/components/Reveal";
+import { getImagePresentationStyle } from "@/lib/image-presentation";
 
 export function GalleryExperience({ content }: { content: SiteContent["gallery"] }) {
   const projects = content.projects;
@@ -71,10 +72,7 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
           <Reveal key={project.id} className="mb-5 break-inside-avoid" delay={(index % 6) * 70}>
             <article className="inline-block w-full overflow-hidden border border-white/15 bg-[rgba(9,15,25,0.78)] shadow-glow">
               <button className="group block w-full text-left" type="button" onClick={() => setActiveProject(project)} aria-label={`Open ${project.title}`}>
-                <div className="relative overflow-hidden border-b border-white/10 bg-night/80">
-                  <img className="h-auto w-full transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110" src={project.image} alt={project.title} />
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(61,229,255,0.08),transparent_45%)] opacity-80" />
-                </div>
+                <GalleryProjectImage project={project} />
                 <div className="p-6">
                   <small className="font-black uppercase text-gold">{categoryLabels.get(project.categoryId) || "Gallery"}</small>
                   <h3 className="mt-2 text-[clamp(1.25rem,2.2vw,2rem)] font-bold leading-none text-ink">{project.title}</h3>
@@ -112,5 +110,29 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
         </div>
       ) : null}
     </section>
+  );
+}
+
+const galleryCropClasses = {
+  original: "",
+  landscape: "aspect-[4/3]",
+  square: "aspect-square",
+  portrait: "aspect-[3/4]"
+} as const;
+
+function GalleryProjectImage({ project }: { project: PortfolioProject }) {
+  const cropAspect = project.cropAspect || "original";
+  const isCropped = cropAspect !== "original";
+
+  return (
+    <div className={`relative overflow-hidden border-b border-white/10 bg-night/80 ${galleryCropClasses[cropAspect]}`}>
+      <img
+        className={`${isCropped ? "h-full w-full object-cover" : "h-auto w-full"} transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110`}
+        src={project.image}
+        alt={project.title}
+        style={getImagePresentationStyle(project.position)}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(61,229,255,0.08),transparent_45%)] opacity-80" />
+    </div>
   );
 }

@@ -229,7 +229,7 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
             {exhibitFrames.map((frame, index) => (
               <figure key={frame.id} className="exhibit-frame group shrink-0 snap-center" style={{ "--frame-index": index } as CSSProperties}>
                 <div className="exhibit-frame-image editorial-frame relative aspect-[4/3] overflow-hidden border border-white/15 bg-night shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
-                  <FramedImage draggable={false} className="transition duration-700 group-hover:scale-[1.025]" src={frame.image} alt={frame.title} sizes="(max-width: 768px) 78vw, 52vw" />
+                  <FramedImage draggable={false} className="transition duration-700 group-hover:scale-[1.025]" src={frame.image} alt={frame.title} position={frame.position} sizes="(max-width: 768px) 78vw, 52vw" />
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/62 via-transparent to-black/15" />
                   <div className="film-perforations pointer-events-none absolute inset-x-3 top-2 z-20 h-1.5 opacity-55" aria-hidden="true" />
                   <span className="absolute left-4 top-4 z-20 border border-white/20 bg-black/55 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan backdrop-blur-md">Frame {String(index + 1).padStart(2, "0")}</span>

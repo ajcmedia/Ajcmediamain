@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Reveal } from "@/components/Reveal";
+import { getImagePresentationStyle } from "@/lib/image-presentation";
 import type { SiteContent } from "@/types/site";
 
 export function BeforeAfterSection({ content }: { content: SiteContent["beforeAfter"] }) {
@@ -61,9 +62,9 @@ export function BeforeAfterSection({ content }: { content: SiteContent["beforeAf
         <Reveal>
           <div className="relative overflow-hidden border border-white/15 bg-night shadow-glow">
             <div className="relative aspect-[16/9] min-h-[300px]">
-              <Image className="h-full w-full object-cover saturate-125 contrast-110" src={content.image} alt="Edited engagement photo" fill sizes="(max-width: 1024px) 100vw, 70vw" />
+              <Image className="h-full w-full object-cover saturate-125 contrast-110" src={content.image} alt="Edited engagement photo" fill sizes="(max-width: 1024px) 100vw, 70vw" style={getImagePresentationStyle(content.position)} />
               <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
-                <Image className="h-full w-full max-w-none object-cover saturate-[0.68] brightness-[0.88] contrast-[0.78] blur-[0.35px]" src={content.image} alt="Raw engagement photo simulation" fill sizes="(max-width: 1024px) 100vw, 70vw" />
+                <Image className="h-full w-full max-w-none object-cover saturate-[0.68] brightness-[0.88] contrast-[0.78] blur-[0.35px]" src={content.image} alt="Raw engagement photo simulation" fill sizes="(max-width: 1024px) 100vw, 70vw" style={getImagePresentationStyle(content.position)} />
                 <div className="absolute inset-0 bg-[#43566c]/20" />
               </div>
               <div className="absolute inset-y-0 z-10 w-px bg-cyan shadow-[0_0_28px_rgba(61,229,255,0.75)]" style={{ left: `${position}%` }}>

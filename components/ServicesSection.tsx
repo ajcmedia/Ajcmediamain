@@ -51,7 +51,7 @@ export function ServicesSection({ content }: { content: SiteContent["services"] 
               onPointerLeave={resetPerspective}
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-night">
-                <FramedImage className="transition duration-500 group-hover:scale-[1.025]" src={service.image} alt={`${service.title} photography sample`} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw" />
+                <FramedImage className="transition duration-500 group-hover:scale-[1.025]" src={service.image} alt={`${service.title} photography sample`} position={service.position} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-night/90" />
               <div className="service-card-glint pointer-events-none absolute inset-0 z-10" aria-hidden="true" />

@@ -2,11 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { cloneJsonValue, createBrowserId } from "@/lib/browser-compat";
+import { getImagePresentationStyle, normalizeImagePosition } from "@/lib/image-presentation";
 import type {
   BookingRequest,
   BookingStatus,
+  GalleryCropAspect,
   GalleryCategory,
   GalleryPortal,
+  ImagePosition,
   PortfolioProject,
   PricingPackage,
   SiteContent
@@ -33,10 +37,18 @@ const bookingStatuses: Array<{ value: BookingStatus; label: string }> = [
   { value: "archived", label: "Archived" }
 ];
 
+function adminFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...init
+  });
+}
+
 export function AdminDashboard({ initialContent }: { initialContent: SiteContent }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const [content, setContent] = useState<SiteContent>(() => structuredClone(initialContent));
+  const [content, setContent] = useState<SiteContent>(() => cloneJsonValue(initialContent));
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
   const [databaseConfigured, setDatabaseConfigured] = useState(false);
   const [status, setStatus] = useState("");
@@ -55,8 +67,8 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
     async function loadDashboard() {
       try {
         const [contentResponse, bookingResponse] = await Promise.all([
-          fetch("/api/site-content", { cache: "no-store" }),
-          fetch("/api/bookings", { cache: "no-store" })
+          adminFetch("/api/site-content"),
+          adminFetch("/api/bookings")
         ]);
         if (contentResponse.ok) {
           const result = (await contentResponse.json()) as { content: SiteContent; databaseConfigured: boolean };
@@ -83,7 +95,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
     setHasUnpublishedChanges(true);
     setPublishNotice(null);
     setContent((current) => {
-      const next = structuredClone(current);
+      const next = cloneJsonValue(current);
       mutator(next);
       return next;
     });
@@ -94,7 +106,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
     setStatus("Saving website content...");
     setPublishNotice({ tone: "info", message: "Publishing your website changes..." });
     try {
-      const response = await fetch("/api/site-content", {
+      const response = await adminFetch("/api/site-content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(content)
@@ -118,7 +130,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
   async function saveBooking(booking: BookingRequest) {
     setStatus(`Saving ${booking.name}'s request...`);
     try {
-      const response = await fetch(`/api/bookings/${booking.id}`, {
+      const response = await adminFetch(`/api/bookings/${booking.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: booking.status, internalNotes: booking.internalNotes })
@@ -134,7 +146,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
 
   async function removeBooking(booking: BookingRequest) {
     if (!window.confirm(`Permanently delete the booking request from ${booking.name}?`)) return;
-    const response = await fetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
+    const response = await adminFetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
     if (response.ok) {
       setBookings((items) => items.filter((item) => item.id !== booking.id));
       setStatus("Booking request deleted.");
@@ -145,7 +157,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
   }
 
   async function signOut() {
-    await fetch("/api/admin/logout", { method: "POST" });
+    await adminFetch("/api/admin/logout", { method: "POST" });
     router.push("/admin-login");
     router.refresh();
   }
@@ -343,25 +355,38 @@ function BookingManager({ bookings, onChange, onSave, onDelete, isLoading }: { b
 function SiteImageManager({ content, mutate, setStatus }: EditorProps) {
   return (
     <div className="grid gap-5">
-      <Panel title="Hero images" copy="The current hero composition stays fixed. Replace the background, four showcase frames, or four strip thumbnails.">
-        <ImageField label="Hero background" value={content.hero.backgroundImage} onChange={(image) => mutate((draft) => { draft.hero.backgroundImage = image; })} setStatus={setStatus} />
+      <Panel title="Hero images" copy="Replace each image, give it a useful description, and set the focal point used by the public composition.">
+        <ImageField label="Hero background" value={content.hero.backgroundImage} position={content.hero.backgroundPosition} onChange={(image) => mutate((draft) => { draft.hero.backgroundImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.backgroundPosition = position; })} setStatus={setStatus} />
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {content.hero.showcaseFrames.map((frame, index) => <ImageField key={frame.id} label={`Showcase frame ${index + 1}`} value={frame.image} onChange={(image) => mutate((draft) => { draft.hero.showcaseFrames[index].image = image; })} setStatus={setStatus} />)}
-          {content.hero.thumbnailFrames.map((frame, index) => <ImageField key={frame.id} label={`Strip thumbnail ${index + 1}`} value={frame.image} onChange={(image) => mutate((draft) => { draft.hero.thumbnailFrames[index].image = image; })} setStatus={setStatus} />)}
+          {content.hero.showcaseFrames.map((frame, index) => (
+            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
+              <TextField label={`Showcase ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.showcaseFrames[index].alt = value; })} />
+              <ImageField label={`Showcase frame ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.showcaseFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.showcaseFrames[index].position = position; })} setStatus={setStatus} />
+            </div>
+          ))}
+          {content.hero.thumbnailFrames.map((frame, index) => (
+            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
+              <TextField label={`Thumbnail ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.thumbnailFrames[index].alt = value; })} />
+              <ImageField label={`Strip thumbnail ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.thumbnailFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.thumbnailFrames[index].position = position; })} setStatus={setStatus} />
+            </div>
+          ))}
         </div>
       </Panel>
-      <Panel title="About and editing comparison" copy="These controls replace the existing images without changing either section’s layout.">
+      <Panel title="About and editing comparison" copy="Replace the images, rename the portrait description, and choose the part of each photograph that stays in frame.">
         <div className="grid gap-4 md:grid-cols-2">
-          <ImageField label="About portrait" value={content.about.portraitImage} onChange={(image) => mutate((draft) => { draft.about.portraitImage = image; })} setStatus={setStatus} />
-          <ImageField label="Before/after photograph" value={content.beforeAfter.image} onChange={(image) => mutate((draft) => { draft.beforeAfter.image = image; })} setStatus={setStatus} />
+          <div className="grid content-start gap-3">
+            <TextField label="Portrait name / description" value={content.about.portraitAlt} onChange={(value) => mutate((draft) => { draft.about.portraitAlt = value; })} />
+            <ImageField label="About portrait" value={content.about.portraitImage} position={content.about.portraitPosition} previewAspect="portrait" onChange={(image) => mutate((draft) => { draft.about.portraitImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.about.portraitPosition = position; })} setStatus={setStatus} />
+          </div>
+          <ImageField label="Before/after photograph" value={content.beforeAfter.image} position={content.beforeAfter.position} onChange={(image) => mutate((draft) => { draft.beforeAfter.image = image; })} onPositionChange={(position) => mutate((draft) => { draft.beforeAfter.position = position; })} setStatus={setStatus} />
         </div>
       </Panel>
       <Panel title="Experience reel" copy="Add, edit, remove, or reorder scenes in the existing scroll experience.">
         <SectionCopy content={content.experience} onChange={(key, value) => mutate((draft) => { draft.experience[key] = value; })} />
         <div className="mt-5 grid gap-4">
           {content.experience.scenes.map((scene, index) => (
-            <ItemCard key={scene.id} title={scene.title || `Scene ${index + 1}`} index={index} count={content.experience.scenes.length} onMove={(direction) => mutate((draft) => { draft.experience.scenes = moveItem(draft.experience.scenes, index, direction); })} onDelete={() => content.experience.scenes.length > 1 ? mutate((draft) => { draft.experience.scenes.splice(index, 1); }) : setStatus("The experience reel needs at least one scene.")}>
-              <div className="grid gap-4 md:grid-cols-2"><TextField label="Scene label" value={scene.label} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].label = value; })} /><TextField label="Title" value={scene.title} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].title = value; })} /><TextArea label="Description" value={scene.copy} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].copy = value; })} /><ImageField label="Scene image" value={scene.image} onChange={(image) => mutate((draft) => { draft.experience.scenes[index].image = image; })} setStatus={setStatus} /></div>
+            <ItemCard key={scene.id} title={scene.title || `Scene ${index + 1}`} index={index} count={content.experience.scenes.length} onMove={(direction) => mutate((draft) => { draft.experience.scenes = moveItem(draft.experience.scenes, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.experience.scenes = moveItemTo(draft.experience.scenes, index, target); })} onDelete={() => content.experience.scenes.length > 1 ? mutate((draft) => { draft.experience.scenes.splice(index, 1); }) : setStatus("The experience reel needs at least one scene.")}>
+              <div className="grid gap-4 md:grid-cols-2"><TextField label="Scene label" value={scene.label} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].label = value; })} /><TextField label="Title" value={scene.title} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].title = value; })} /><TextArea label="Description" value={scene.copy} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].copy = value; })} /><ImageField label="Scene image" value={scene.image} position={scene.position} onChange={(image) => mutate((draft) => { draft.experience.scenes[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.experience.scenes[index].position = position; })} setStatus={setStatus} /></div>
             </ItemCard>
           ))}
         </div>
@@ -370,8 +395,8 @@ function SiteImageManager({ content, mutate, setStatus }: EditorProps) {
       <Panel title="Services images" copy="Service cards keep the same presentation while their photographs and wording can be maintained here.">
         <div className="grid gap-4">
           {content.services.items.map((service, index) => (
-            <ItemCard key={service.id} title={service.title} index={index} count={content.services.items.length} onMove={(direction) => mutate((draft) => { draft.services.items = moveItem(draft.services.items, index, direction); })} onDelete={() => content.services.items.length > 1 ? mutate((draft) => { draft.services.items.splice(index, 1); }) : setStatus("At least one service is required.")}>
-              <div className="grid gap-4 md:grid-cols-2"><TextField label="Service title" value={service.title} onChange={(value) => mutate((draft) => { draft.services.items[index].title = value; })} /><Field label="Icon"><select className="form-control" value={service.icon} onChange={(event) => mutate((draft) => { draft.services.items[index].icon = event.target.value as typeof service.icon; })}><option value="camera">Camera</option><option value="event">Event</option><option value="portrait">Portrait</option><option value="content">Content</option></select></Field><TextArea label="Description" value={service.description} onChange={(value) => mutate((draft) => { draft.services.items[index].description = value; })} /><ImageField label="Service image" value={service.image} onChange={(image) => mutate((draft) => { draft.services.items[index].image = image; })} setStatus={setStatus} /></div>
+            <ItemCard key={service.id} title={service.title} index={index} count={content.services.items.length} onMove={(direction) => mutate((draft) => { draft.services.items = moveItem(draft.services.items, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.services.items = moveItemTo(draft.services.items, index, target); })} onDelete={() => content.services.items.length > 1 ? mutate((draft) => { draft.services.items.splice(index, 1); }) : setStatus("At least one service is required.")}>
+              <div className="grid gap-4 md:grid-cols-2"><TextField label="Service title" value={service.title} onChange={(value) => mutate((draft) => { draft.services.items[index].title = value; })} /><Field label="Icon"><select className="form-control" value={service.icon} onChange={(event) => mutate((draft) => { draft.services.items[index].icon = event.target.value as typeof service.icon; })}><option value="camera">Camera</option><option value="event">Event</option><option value="portrait">Portrait</option><option value="content">Content</option></select></Field><TextArea label="Description" value={service.description} onChange={(value) => mutate((draft) => { draft.services.items[index].description = value; })} /><ImageField label="Service image" value={service.image} position={service.position} onChange={(image) => mutate((draft) => { draft.services.items[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.services.items[index].position = position; })} setStatus={setStatus} /></div>
             </ItemCard>
           ))}
         </div>
@@ -387,13 +412,13 @@ function PortalManager({ content, mutate, onAdd, onDelete, setStatus }: EditorPr
       <div className={`my-5 border p-4 ${content.portals.items.length === 3 ? "border-green/35 text-green" : "border-gold/35 text-gold"}`}>{content.portals.items.length}/3 portal slots prepared. Publishing is allowed only when all three slots are present.</div>
       <div className="grid gap-4">
         {content.portals.items.map((portal, index) => (
-          <ItemCard key={portal.id} title={`Portal ${index + 1}: ${portal.title}`} index={index} count={content.portals.items.length} onMove={(direction) => mutate((draft) => { draft.portals.items = moveItem(draft.portals.items, index, direction); })} onDelete={() => onDelete(portal)} deleteLabel="Delete portal + category">
+          <ItemCard key={portal.id} title={`Portal ${index + 1}: ${portal.title}`} index={index} count={content.portals.items.length} onMove={(direction) => mutate((draft) => { draft.portals.items = moveItem(draft.portals.items, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.portals.items = moveItemTo(draft.portals.items, index, target); })} onDelete={() => onDelete(portal)} deleteLabel="Delete portal + category">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Connected Gallery category"><select className="form-control" value={portal.categoryId} onChange={(event) => mutate((draft) => { const category = draft.gallery.categories.find((item) => item.id === event.target.value); draft.portals.items[index].categoryId = event.target.value; if (category) draft.portals.items[index].title = category.label; })}>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
               <TextField label="Portal and Gallery name" value={portal.title} onChange={(value) => mutate((draft) => { const category = draft.gallery.categories.find((item) => item.id === draft.portals.items[index].categoryId); draft.portals.items[index].title = value; if (category) category.label = value; })} />
               <TextField label="Feature wording" value={portal.label} onChange={(value) => mutate((draft) => { draft.portals.items[index].label = value; })} />
               <Field label="Accent"><select className="form-control" value={portal.color} onChange={(event) => mutate((draft) => { draft.portals.items[index].color = event.target.value as GalleryPortal["color"]; })}><option value="cyan">Cyan</option><option value="gold">Gold</option><option value="rose">Rose</option></select></Field>
-              <div className="md:col-span-2"><ImageField label="Portal image" value={portal.image} onChange={(image) => mutate((draft) => { draft.portals.items[index].image = image; })} setStatus={setStatus} /></div>
+              <div className="md:col-span-2"><ImageField label="Portal image" value={portal.image} position={portal.position} onChange={(image) => mutate((draft) => { draft.portals.items[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.portals.items[index].position = position; })} setStatus={setStatus} /></div>
             </div>
           </ItemCard>
         ))}
@@ -404,6 +429,54 @@ function PortalManager({ content, mutate, onAdd, onDelete, setStatus }: EditorPr
 }
 
 function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: EditorProps & { onDeleteCategory: (category: GalleryCategory) => void }) {
+  const [recentProjectId, setRecentProjectId] = useState<string | null>(null);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const visibleProjectEntries = useMemo(() => {
+    const search = projectSearch.trim().toLowerCase();
+    return content.gallery.projects
+      .map((project, index) => ({ project, index }))
+      .filter(({ project }) => (categoryFilter === "all" || project.categoryId === categoryFilter) && (!search || `${project.title} ${project.description}`.toLowerCase().includes(search)));
+  }, [categoryFilter, content.gallery.projects, projectSearch]);
+
+  useEffect(() => {
+    if (!recentProjectId) return;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`gallery-project-${recentProjectId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+    const timeout = window.setTimeout(() => setRecentProjectId(null), 5000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [recentProjectId, content.gallery.projects.length]);
+
+  function addProject() {
+    const firstCategory = content.gallery.categories[0];
+    if (!firstCategory) {
+      setStatus("Add a Gallery category before creating a project.");
+      return;
+    }
+    const id = createId("project");
+    mutate((draft) => {
+      const project: PortfolioProject = {
+        id,
+        title: "New project",
+        categoryId: firstCategory.id,
+        image: "/assets/gallery/wedding-waterfront.png",
+        description: "Add a short portfolio caption.",
+        visible: true,
+        cropAspect: "landscape",
+        position: { x: 50, y: 50, zoom: 1 }
+      };
+      draft.gallery.projects.push(project);
+    });
+    setRecentProjectId(id);
+    setStatus(`New Gallery project added at position ${content.gallery.projects.length + 1}. It is highlighted below.`);
+  }
+
   return (
     <div className="grid gap-5">
       <Panel title="Gallery settings" copy="Category labels drive Gallery filters. Portal connections continue using their stable internal IDs.">
@@ -416,41 +489,52 @@ function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: Editor
             </div>
           ))}
         </div>
-        <AddButton label="Add Gallery category" onClick={() => mutate((draft) => { draft.gallery.categories.push({ id: createId("category"), label: "New category" }); })} />
+        <AddButton label="Add Gallery category" helper="New categories appear at the end of this list." onClick={() => { mutate((draft) => { draft.gallery.categories.push({ id: createId("category"), label: "New category" }); }); setStatus("New Gallery category added at the end of the list."); }} />
       </Panel>
-      <Panel title="Gallery projects" copy="Create, edit, hide, reorder, or delete photographs. Reassign a project here before removing its category or portal.">
+      <Panel title="Gallery projects" copy="New projects appear at the bottom and are highlighted. Use the position menu to move an item directly instead of repeatedly clicking arrows.">
+        <div className="sticky top-20 z-20 mb-5 grid gap-3 border border-cyan/20 bg-night/95 p-3 shadow-glow backdrop-blur-xl md:grid-cols-[minmax(0,1fr)_240px_auto] md:items-end">
+          <Field label="Find a Gallery project"><input className="form-control" type="search" value={projectSearch} placeholder="Search by title or description..." onChange={(event) => setProjectSearch(event.target.value)} /></Field>
+          <Field label="Filter category"><select className="form-control" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">All categories</option>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+          <p className="pb-3 text-sm font-bold text-muted">Showing {visibleProjectEntries.length} of {content.gallery.projects.length}</p>
+        </div>
+        {!visibleProjectEntries.length ? <p className="mb-4 border border-white/10 bg-white/[0.03] p-4 text-muted">No Gallery projects match this search and category filter.</p> : null}
         <div className="grid gap-4">
-          {content.gallery.projects.map((project, index) => (
-            <ItemCard key={project.id} title={project.title} index={index} count={content.gallery.projects.length} onMove={(direction) => mutate((draft) => { draft.gallery.projects = moveItem(draft.gallery.projects, index, direction); })} onDelete={() => window.confirm(`Delete “${project.title}” from the Gallery draft?`) && mutate((draft) => { draft.gallery.projects.splice(index, 1); })}>
+          {visibleProjectEntries.map(({ project, index }) => (
+            <ItemCard key={project.id} itemId={`gallery-project-${project.id}`} highlighted={recentProjectId === project.id} title={project.title} index={index} count={content.gallery.projects.length} onMove={(direction) => mutate((draft) => { draft.gallery.projects = moveItem(draft.gallery.projects, index, direction); })} onMoveTo={(target) => { mutate((draft) => { draft.gallery.projects = moveItemTo(draft.gallery.projects, index, target); }); setStatus(`“${project.title}” moved to position ${target + 1}.`); }} onDelete={() => window.confirm(`Delete “${project.title}” from the Gallery draft?`) && mutate((draft) => { draft.gallery.projects.splice(index, 1); })}>
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField label="Project title" value={project.title} onChange={(value) => mutate((draft) => { draft.gallery.projects[index].title = value; })} />
+                <TextField label="Project / image display name" value={project.title} onChange={(value) => mutate((draft) => { draft.gallery.projects[index].title = value; })} />
                 <Field label="Category"><select className="form-control" value={project.categoryId} onChange={(event) => mutate((draft) => { draft.gallery.projects[index].categoryId = event.target.value; })}>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
                 <TextArea label="Description" value={project.description} onChange={(value) => mutate((draft) => { draft.gallery.projects[index].description = value; })} />
-                <ImageField label="Project image" value={project.image} onChange={(image) => mutate((draft) => { draft.gallery.projects[index].image = image; })} setStatus={setStatus} />
+                <ImageField label="Project image" value={project.image} position={project.position} cropAspect={project.cropAspect || "original"} onChange={(image) => mutate((draft) => { draft.gallery.projects[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.gallery.projects[index].position = position; })} onCropAspectChange={(cropAspect) => mutate((draft) => { draft.gallery.projects[index].cropAspect = cropAspect; })} setStatus={setStatus} />
               </div>
               <label className="mt-3 flex items-center gap-2 text-sm font-bold text-ink"><input type="checkbox" checked={project.visible} onChange={(event) => mutate((draft) => { draft.gallery.projects[index].visible = event.target.checked; })} /> Show this project on the public Gallery</label>
             </ItemCard>
           ))}
         </div>
-        <AddButton label="Add Gallery project" onClick={() => mutate((draft) => { const firstCategory = draft.gallery.categories[0]; if (!firstCategory) return; const project: PortfolioProject = { id: createId("project"), title: "New project", categoryId: firstCategory.id, image: "/assets/gallery/wedding-waterfront.png", description: "Add a short portfolio caption.", visible: true }; draft.gallery.projects.unshift(project); })} />
+        <AddButton label="Add Gallery project" helper="The new project will appear directly above this button." onClick={addProject} />
       </Panel>
     </div>
   );
 }
 
-function PricingManager({ content, mutate }: EditorProps) {
+function PricingManager({ content, mutate, setStatus }: EditorProps) {
   return (
     <Panel title="Pricing packages" copy="Package cards keep the existing frontend styling and can be created, reordered, featured, edited, or removed.">
       <SectionCopy content={content.pricing} onChange={(key, value) => mutate((draft) => { draft.pricing[key] = value; })} />
       <div className="mt-5 grid gap-4">
         {content.pricing.packages.map((item, index) => (
-          <ItemCard key={item.id} title={item.label} index={index} count={content.pricing.packages.length} onMove={(direction) => mutate((draft) => { draft.pricing.packages = moveItem(draft.pricing.packages, index, direction); })} onDelete={() => content.pricing.packages.length > 1 && window.confirm(`Delete “${item.label}”?`) && mutate((draft) => { draft.pricing.packages.splice(index, 1); })}>
-            <div className="grid gap-4 md:grid-cols-2"><TextField label="Package name" value={item.label} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].label = value; })} /><TextField label="Displayed price" value={item.price} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].price = value; })} /><TextArea label="Description" value={item.description} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].description = value; })} /><TextArea label="Features (one per line)" value={item.features.join("\n")} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].features = value.split("\n").map((feature) => feature.trim()).filter(Boolean); })} /></div>
+          <ItemCard key={item.id} title={item.label} index={index} count={content.pricing.packages.length} onMove={(direction) => mutate((draft) => { draft.pricing.packages = moveItem(draft.pricing.packages, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.pricing.packages = moveItemTo(draft.pricing.packages, index, target); })} onDelete={() => content.pricing.packages.length > 1 && window.confirm(`Delete “${item.label}”?`) && mutate((draft) => { draft.pricing.packages.splice(index, 1); })}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="Package name" value={item.label} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].label = value; })} />
+              <TextField label="Displayed price" value={item.price} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].price = value; })} />
+              <TextArea label="Description" value={item.description} rows={5} maxLength={280} help={`${item.description.length}/280 characters`} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].description = value; })} />
+              <FeatureListEditor features={item.features} onChange={(features) => mutate((draft) => { draft.pricing.packages[index].features = features; })} onLimit={() => setStatus("Pricing cards can contain up to 8 bullet points so the public layout stays readable.")} />
+            </div>
             <label className="mt-3 flex items-center gap-2 text-sm font-bold text-ink"><input type="checkbox" checked={item.featured} onChange={(event) => mutate((draft) => { if (event.target.checked) draft.pricing.packages.forEach((pack) => { pack.featured = false; }); draft.pricing.packages[index].featured = event.target.checked; })} /> Feature this package</label>
           </ItemCard>
         ))}
       </div>
-      <AddButton label="Add pricing package" onClick={() => mutate((draft) => { const item: PricingPackage = { id: createId("pricing"), label: "New Package", price: "$0", description: "Describe who this package is for.", features: ["Add a feature"], featured: false }; draft.pricing.packages.push(item); })} />
+      <AddButton label="Add pricing package" helper="New packages are added at the end of the list." onClick={() => { mutate((draft) => { const item: PricingPackage = { id: createId("pricing"), label: "New Package", price: "$0", description: "Describe who this package is for.", features: ["Add a feature"], featured: false }; draft.pricing.packages.push(item); }); setStatus("New pricing package added at the end of the list."); }} />
     </Panel>
   );
 }
@@ -461,8 +545,8 @@ function StoryManager({ content, mutate, setStatus }: EditorProps) {
       <SectionCopy content={content.featuredStory} onChange={(key, value) => mutate((draft) => { draft.featuredStory[key] = value; })} />
       <div className="mt-5 grid gap-4">
         {content.featuredStory.frames.map((frame, index) => (
-          <ItemCard key={frame.id} title={frame.title} index={index} count={content.featuredStory.frames.length} onMove={(direction) => mutate((draft) => { draft.featuredStory.frames = moveItem(draft.featuredStory.frames, index, direction); })} onDelete={() => content.featuredStory.frames.length > 1 ? mutate((draft) => { draft.featuredStory.frames.splice(index, 1); }) : setStatus("Featured Story needs at least one frame.")}>
-            <div className="grid gap-4 md:grid-cols-2"><TextField label="Chapter label" value={frame.chapter} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].chapter = value; })} /><TextField label="Selector eyebrow" value={frame.eyebrow} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].eyebrow = value; })} /><TextField label="Frame title" value={frame.title} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].title = value; })} /><TextArea label="Frame copy" value={frame.copy} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].copy = value; })} /><div className="md:col-span-2"><ImageField label="Frame image" value={frame.image} onChange={(image) => mutate((draft) => { draft.featuredStory.frames[index].image = image; })} setStatus={setStatus} /></div></div>
+          <ItemCard key={frame.id} title={frame.title} index={index} count={content.featuredStory.frames.length} onMove={(direction) => mutate((draft) => { draft.featuredStory.frames = moveItem(draft.featuredStory.frames, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.featuredStory.frames = moveItemTo(draft.featuredStory.frames, index, target); })} onDelete={() => content.featuredStory.frames.length > 1 ? mutate((draft) => { draft.featuredStory.frames.splice(index, 1); }) : setStatus("Featured Story needs at least one frame.")}>
+            <div className="grid gap-4 md:grid-cols-2"><TextField label="Chapter label" value={frame.chapter} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].chapter = value; })} /><TextField label="Selector eyebrow" value={frame.eyebrow} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].eyebrow = value; })} /><TextField label="Frame title" value={frame.title} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].title = value; })} /><TextArea label="Frame copy" value={frame.copy} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].copy = value; })} /><div className="md:col-span-2"><ImageField label="Frame image" value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.featuredStory.frames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.featuredStory.frames[index].position = position; })} setStatus={setStatus} /></div></div>
           </ItemCard>
         ))}
       </div>
@@ -477,9 +561,9 @@ function EditorialManager({ content, mutate, setStatus }: EditorProps) {
       <SectionCopy content={content.editorial} onChange={(key, value) => mutate((draft) => { draft.editorial[key] = value; })} />
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         {content.editorial.frames.map((frame, index) => (
-          <ItemCard key={frame.id} title={frame.title} index={index} count={content.editorial.frames.length} onMove={(direction) => mutate((draft) => { draft.editorial.frames = moveItem(draft.editorial.frames, index, direction); })} onDelete={() => content.editorial.frames.length > 1 ? mutate((draft) => { draft.editorial.frames.splice(index, 1); }) : setStatus("The Editorial Wall needs at least one frame.")}>
+          <ItemCard key={frame.id} title={frame.title} index={index} count={content.editorial.frames.length} onMove={(direction) => mutate((draft) => { draft.editorial.frames = moveItem(draft.editorial.frames, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.editorial.frames = moveItemTo(draft.editorial.frames, index, target); })} onDelete={() => content.editorial.frames.length > 1 ? mutate((draft) => { draft.editorial.frames.splice(index, 1); }) : setStatus("The Editorial Wall needs at least one frame.")}>
             <TextField label="Frame title" value={frame.title} onChange={(value) => mutate((draft) => { draft.editorial.frames[index].title = value; })} />
-            <div className="mt-4"><ImageField label="Frame image" value={frame.image} onChange={(image) => mutate((draft) => { draft.editorial.frames[index].image = image; })} setStatus={setStatus} /></div>
+            <div className="mt-4"><ImageField label="Frame image" value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.editorial.frames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.editorial.frames[index].position = position; })} setStatus={setStatus} /></div>
           </ItemCard>
         ))}
       </div>
@@ -498,8 +582,31 @@ function SectionCopy<T extends { eyebrow: string; title: string; description: st
   return <div className="grid gap-4 md:grid-cols-2"><TextField label="Section eyebrow" value={content.eyebrow} onChange={(value) => onChange("eyebrow", value)} /><TextField label="Section title" value={content.title} onChange={(value) => onChange("title", value)} /><div className="md:col-span-2"><TextArea label="Section introduction" value={content.description} onChange={(value) => onChange("description", value)} /></div></div>;
 }
 
-function ItemCard({ title, index, count, onMove, onDelete, deleteLabel = "Delete", children }: { title: string; index: number; count: number; onMove: (direction: -1 | 1) => void; onDelete: () => void; deleteLabel?: string; children: React.ReactNode }) {
-  return <article className="border border-white/15 bg-white/[0.035] p-4"><header className="mb-4 flex flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center sm:justify-between"><h3 className="text-lg font-black text-ink">{title}</h3><div className="flex flex-wrap gap-2"><button className="border border-white/15 px-3 py-2 text-muted disabled:opacity-30" type="button" disabled={index === 0} onClick={() => onMove(-1)}>↑</button><button className="border border-white/15 px-3 py-2 text-muted disabled:opacity-30" type="button" disabled={index === count - 1} onClick={() => onMove(1)}>↓</button><button className="border border-rose/35 px-3 py-2 text-rose" type="button" onClick={onDelete}>{deleteLabel}</button></div></header>{children}</article>;
+function ItemCard({ title, index, count, onMove, onMoveTo, onDelete, deleteLabel = "Delete", itemId, highlighted = false, children }: { title: string; index: number; count: number; onMove: (direction: -1 | 1) => void; onMoveTo?: (target: number) => void; onDelete: () => void; deleteLabel?: string; itemId?: string; highlighted?: boolean; children: React.ReactNode }) {
+  return (
+    <article id={itemId} className={`scroll-mt-24 border bg-white/[0.035] p-4 transition duration-500 ${highlighted ? "border-cyan bg-cyan/10 shadow-cyan" : "border-white/15"}`}>
+      <header className="mb-4 grid gap-3 border-b border-white/10 pb-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="min-w-0">
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-cyan">Position {index + 1} of {count}{highlighted ? " · just added" : ""}</p>
+          <h3 className="mt-1 truncate text-lg font-black text-ink">{title}</h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {onMoveTo && count > 1 ? (
+            <label className="flex items-center gap-2 border border-white/15 bg-night/55 px-2.5 py-1.5 text-xs font-bold text-muted">
+              Move to
+              <select className="bg-night px-2 py-1 text-ink outline-none" value={index} aria-label={`Move ${title} to position`} onChange={(event) => onMoveTo(Number(event.target.value))}>
+                {Array.from({ length: count }, (_, position) => <option key={position} value={position}>{position + 1}</option>)}
+              </select>
+            </label>
+          ) : null}
+          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === 0} onClick={() => onMove(-1)}>Move earlier</button>
+          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === count - 1} onClick={() => onMove(1)}>Move later</button>
+          <button className="border border-rose/35 px-3 py-2 text-sm font-bold text-rose transition hover:bg-rose/10" type="button" onClick={onDelete}>{deleteLabel}</button>
+        </div>
+      </header>
+      {children}
+    </article>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -510,43 +617,152 @@ function TextField({ label, value, onChange }: { label: string; value: string; o
   return <Field label={label}><input className="form-control" type="text" value={value} onChange={(event) => onChange(event.target.value)} /></Field>;
 }
 
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <Field label={label}><textarea className="form-control min-h-24 resize-y" value={value} onChange={(event) => onChange(event.target.value)} /></Field>;
+function TextArea({ label, value, onChange, rows = 4, maxLength, help }: { label: string; value: string; onChange: (value: string) => void; rows?: number; maxLength?: number; help?: string }) {
+  return <Field label={label}><textarea className="form-control min-h-28 resize-y" rows={rows} maxLength={maxLength} value={value} onChange={(event) => onChange(event.target.value)} />{help ? <span className="text-xs font-medium text-muted">{help}</span> : null}</Field>;
 }
 
-function ImageField({ label, value, onChange, setStatus }: { label: string; value: string; onChange: (value: string) => void; setStatus: (status: string) => void }) {
+function FeatureListEditor({ features, onChange, onLimit }: { features: string[]; onChange: (features: string[]) => void; onLimit: () => void }) {
+  const maxFeatures = 8;
+  function updateFeature(index: number, value: string) {
+    onChange(features.map((feature, featureIndex) => featureIndex === index ? value : feature));
+  }
+  function addFeature() {
+    if (features.length >= maxFeatures) {
+      onLimit();
+      return;
+    }
+    onChange([...features, "New feature"]);
+  }
+  return (
+    <div className="grid gap-2 text-sm font-extrabold text-ink/80">
+      <div className="flex items-center justify-between gap-3">
+        <span>Package bullets</span>
+        <span className="text-xs font-medium text-muted">{features.length}/{maxFeatures}</span>
+      </div>
+      <div className="grid gap-2">
+        {features.map((feature, index) => (
+          <div key={index} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full border border-cyan/25 text-xs text-cyan">{index + 1}</span>
+            <input className="form-control min-h-11 py-2" type="text" maxLength={120} value={feature} onChange={(event) => updateFeature(index, event.target.value)} />
+            <button className="min-h-11 border border-rose/30 px-3 text-rose disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={features.length === 1} aria-label={`Remove bullet ${index + 1}`} onClick={() => onChange(features.filter((_, featureIndex) => featureIndex !== index))}>Remove</button>
+          </div>
+        ))}
+      </div>
+      <button className="w-fit border border-cyan/35 bg-cyan/10 px-3 py-2 text-sm font-black text-cyan disabled:cursor-not-allowed disabled:opacity-40" type="button" disabled={features.length >= maxFeatures} onClick={addFeature}>+ Add bullet</button>
+      <span className="text-xs font-medium text-muted">Up to 8 bullets, 120 characters each. Cards grow evenly to fit the published content.</span>
+    </div>
+  );
+}
+
+const previewAspectClasses: Record<Exclude<GalleryCropAspect, "original">, string> = {
+  landscape: "aspect-[4/3]",
+  square: "aspect-square",
+  portrait: "aspect-[3/4]"
+};
+
+function ImageField({ label, value, position, cropAspect, previewAspect = "landscape", onChange, onPositionChange, onCropAspectChange, setStatus }: { label: string; value: string; position?: ImagePosition; cropAspect?: GalleryCropAspect; previewAspect?: Exclude<GalleryCropAspect, "original">; onChange: (value: string) => void; onPositionChange?: (position: ImagePosition) => void; onCropAspectChange?: (cropAspect: GalleryCropAspect) => void; setStatus: (status: string) => void }) {
   const [uploading, setUploading] = useState(false);
+  const focalPoint = normalizeImagePosition(position);
+  const selectedAspect = cropAspect && cropAspect !== "original" ? cropAspect : previewAspect;
+  const useOriginalRatio = cropAspect === "original";
+
   async function upload(file: File) {
+    if (file.size > 20 * 1024 * 1024) {
+      setStatus("Images must be 20 MB or smaller. Try exporting a smaller copy from Photos.");
+      return;
+    }
+
     setUploading(true);
-    setStatus(`Uploading ${file.name}...`);
+    const isApplePhoto = /\.(heic|heif)$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type);
+    setStatus(isApplePhoto ? `Converting and uploading ${file.name}...` : `Uploading ${file.name}...`);
     const formData = new FormData();
     formData.set("file", file);
     try {
-      const response = await fetch("/api/media", { method: "POST", body: formData });
-      const result = (await response.json()) as { url?: string; error?: string };
+      const response = await adminFetch("/api/media", { method: "POST", body: formData });
+      const result = (await response.json()) as { url?: string; error?: string; converted?: boolean };
       if (!response.ok || !result.url) throw new Error(result.error || "Image upload failed.");
       onChange(result.url);
-      setStatus("Image uploaded. Publish website changes when the section is ready.");
+      setStatus(result.converted ? "iPhone photo converted and uploaded. Publish website changes when the section is ready." : "Image uploaded. Publish website changes when the section is ready.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Image upload failed.");
     } finally {
       setUploading(false);
     }
   }
+
+  function setFocalPoint(event: React.MouseEvent<HTMLButtonElement>) {
+    if (!onPositionChange) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = Math.round(((event.clientX - bounds.left) / bounds.width) * 100);
+    const y = Math.round(((event.clientY - bounds.top) / bounds.height) * 100);
+    onPositionChange({ ...focalPoint, x: clampPercentage(x), y: clampPercentage(y) });
+  }
+
+  function updateZoom(zoom: number) {
+    onPositionChange?.({ ...focalPoint, zoom: Math.max(1, Math.min(3, Number(zoom.toFixed(2)))) });
+  }
+
   return (
     <div className="grid gap-3 border border-white/12 bg-black/15 p-3">
-      <div className="aspect-[16/9] overflow-hidden border border-white/10 bg-night"><img className="h-full w-full object-cover" src={value} alt="" /></div>
-      <TextField label={label} value={value} onChange={onChange} />
-      <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-white/15 px-4 py-2 text-sm font-black text-ink transition hover:border-cyan/45">
-        {uploading ? "Uploading..." : "Upload replacement"}
-        <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) upload(file); event.currentTarget.value = ""; }} />
-      </label>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-extrabold text-ink/85">{label}</p>
+          <p className="mt-1 max-w-[42ch] truncate text-xs text-muted" title={value}>{getImageName(value)}</p>
+        </div>
+        <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-cyan/35 bg-cyan/10 px-4 py-2 text-sm font-black text-cyan transition hover:border-cyan">
+          {uploading ? "Uploading..." : "Replace image"}
+          <input className="sr-only" type="file" accept="image/*,.heic,.heif" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) upload(file); event.currentTarget.value = ""; }} />
+        </label>
+      </div>
+
+      <button className={`${previewAspectClasses[selectedAspect]} relative w-full touch-manipulation overflow-hidden border border-white/10 bg-night text-left`} type="button" onClick={setFocalPoint} disabled={!onPositionChange} aria-label={`Choose the focal point for ${label}`}>
+        <img className={`h-full w-full ${useOriginalRatio ? "object-contain" : "object-cover"}`} src={value} alt="" style={getImagePresentationStyle(focalPoint)} />
+        {onPositionChange ? <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-cyan/70 shadow-[0_0_0_5px_rgba(0,0,0,0.35)]" style={{ left: `${focalPoint.x}%`, top: `${focalPoint.y}%` }} /> : null}
+        {onPositionChange ? <span className="pointer-events-none absolute bottom-2 left-2 bg-black/70 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-white">Click the subject to reposition</span> : null}
+      </button>
+
+      {onPositionChange ? (
+        <details className="border border-white/10 bg-white/[0.025] p-3">
+          <summary className="cursor-pointer text-sm font-black text-cyan">Adjust crop and framing</summary>
+          <div className="mt-4 grid gap-4">
+            {onCropAspectChange ? (
+              <Field label="Gallery card crop shape">
+                <select className="form-control" value={cropAspect || "original"} onChange={(event) => onCropAspectChange(event.target.value as GalleryCropAspect)}>
+                  <option value="original">Original image ratio</option>
+                  <option value="landscape">Landscape (4:3)</option>
+                  <option value="square">Square (1:1)</option>
+                  <option value="portrait">Portrait (3:4)</option>
+                </select>
+              </Field>
+            ) : null}
+            <Field label={`Zoom: ${Math.round(focalPoint.zoom * 100)}%`}>
+              <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-center gap-3">
+                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom <= 1} aria-label={`Zoom ${label} out`} onClick={() => updateZoom(focalPoint.zoom - 0.1)}>−</button>
+                <input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="1" max="3" step="0.05" value={focalPoint.zoom} aria-label={`Zoom ${label}`} onChange={(event) => updateZoom(Number(event.target.value))} />
+                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom >= 3} aria-label={`Zoom ${label} in`} onClick={() => updateZoom(focalPoint.zoom + 0.1)}>+</button>
+              </div>
+            </Field>
+            <Field label={`Horizontal position: ${focalPoint.x}%`}><input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.x} onChange={(event) => onPositionChange({ ...focalPoint, x: Number(event.target.value) })} /></Field>
+            <Field label={`Vertical position: ${focalPoint.y}%`}><input className="h-2 w-full cursor-ns-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.y} onChange={(event) => onPositionChange({ ...focalPoint, y: Number(event.target.value) })} /></Field>
+            <div className="flex flex-wrap gap-2">
+              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ ...focalPoint, x: 50, y: 50 })}>Center subject</button>
+              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ x: 50, y: 50, zoom: 1 })}>Reset framing</button>
+            </div>
+            <p className="text-xs font-medium text-muted">Zoom, crop shape, and focal point are saved with the website content. The original upload stays unchanged.</p>
+          </div>
+        </details>
+      ) : null}
+
+      <details className="border-t border-white/10 pt-2">
+        <summary className="cursor-pointer text-xs font-bold text-muted">Advanced image source</summary>
+        <div className="mt-3"><TextField label="Image path" value={value} onChange={onChange} /></div>
+      </details>
     </div>
   );
 }
 
-function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return <button className="mt-5 border border-cyan/35 bg-cyan/10 px-4 py-3 font-black text-cyan transition hover:border-cyan" type="button" onClick={onClick}>+ {label}</button>;
+function AddButton({ label, onClick, helper }: { label: string; onClick: () => void; helper?: string }) {
+  return <div className="mt-5 grid w-fit gap-1"><button className="border border-cyan/35 bg-cyan/10 px-4 py-3 font-black text-cyan transition hover:border-cyan" type="button" onClick={onClick}>+ {label}</button>{helper ? <span className="text-xs text-muted">{helper}</span> : null}</div>;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
@@ -561,6 +777,23 @@ function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
   return next;
 }
 
+function moveItemTo<T>(items: T[], index: number, target: number) {
+  if (index === target || index < 0 || target < 0 || index >= items.length || target >= items.length) return [...items];
+  const next = [...items];
+  const [item] = next.splice(index, 1);
+  next.splice(target, 0, item);
+  return next;
+}
+
+function clampPercentage(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function getImageName(value: string) {
+  if (value.startsWith("/api/media/")) return `Uploaded image · ${value.split("/").pop()}`;
+  return decodeURIComponent(value.split("/").pop() || "Current image").replace(/[-_]+/g, " ");
+}
+
 function createId(prefix: string) {
-  return `${prefix}-${crypto.randomUUID()}`;
+  return createBrowserId(prefix);
 }

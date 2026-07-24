@@ -31,7 +31,7 @@ function requiresAdminAuth(request: NextRequest) {
     return false;
   }
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return true;
   }
 

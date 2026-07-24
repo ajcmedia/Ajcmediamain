@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { getObjectPosition, getZoomStyle } from "@/lib/image-presentation";
+import type { ImagePosition } from "@/types/site";
 
 const portraitImages = new Set([
   "/assets/gallery/wedding-waterfront.png",
@@ -29,6 +31,7 @@ type FramedImageProps = {
   priority?: boolean;
   draggable?: boolean;
   fit?: "auto" | "cover" | "contain";
+  position?: ImagePosition;
 };
 
 export function FramedImage({
@@ -38,10 +41,11 @@ export function FramedImage({
   className = "",
   priority = false,
   draggable,
-  fit = "auto"
+  fit = "auto",
+  position
 }: FramedImageProps) {
-  const showFullImage = fit === "contain" || (fit === "auto" && portraitImages.has(src));
-  const objectPosition = focalPoints[src] ?? "50% 50%";
+  const showFullImage = fit === "contain" || (fit === "auto" && !position && portraitImages.has(src));
+  const objectPosition = getObjectPosition(position, focalPoints[src] ?? "50% 50%");
 
   return (
     <>
@@ -59,16 +63,18 @@ export function FramedImage({
           <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         </>
       ) : null}
-      <Image
-        className={`h-full w-full ${showFullImage ? "object-contain" : "object-cover"} ${className}`}
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        priority={priority}
-        draggable={draggable}
-        style={{ objectPosition }}
-      />
+      <span className="absolute inset-0 block will-change-transform" style={getZoomStyle(position)}>
+        <Image
+          className={`h-full w-full ${showFullImage ? "object-contain" : "object-cover"} ${className}`}
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          draggable={draggable}
+          style={{ objectPosition }}
+        />
+      </span>
     </>
   );
 }

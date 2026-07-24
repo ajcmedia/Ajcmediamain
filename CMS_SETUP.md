@@ -49,7 +49,22 @@ Open `/admin-login`, enter `ADMIN_PASSWORD`, and use the sidebar to manage:
 - Featured Story frames;
 - Editorial Wall frames.
 
-Content edits remain in the browser as a draft until **Publish website changes** is selected. Uploaded images are limited to 8 MB and support JPEG, PNG, WebP, GIF, and AVIF.
+Content edits remain in the browser as a draft until **Publish website changes** is selected. Uploaded images are limited to 20 MB and support JPEG, PNG, WebP, GIF, AVIF, HEIC, and HEIF. iPhone HEIC/HEIF photos are converted to web-safe JPEGs during upload.
+
+Editor behavior:
+
+- Ordered cards include a direct position menu plus **Move earlier** and **Move later** controls.
+- New Gallery projects are added at the bottom, scrolled into view, and highlighted for five seconds.
+- Gallery projects can be searched and filtered by category while editing.
+- Image previews can set a non-destructive focal point and 100–300% zoom; Gallery cards can additionally use the original, landscape, square, or portrait crop shape.
+- Gallery project names and image descriptions can be renamed without changing the stored image URL.
+- Pricing packages support up to eight individually editable bullet points, with 120 characters per bullet and a 280-character description limit.
+
+Apple compatibility:
+
+- Admin API requests explicitly include the first-party session cookie and bypass Safari’s response cache.
+- The editor avoids `structuredClone()` and `crypto.randomUUID()` browser requirements so older supported Safari versions can still edit and create items.
+- Crop sliders, zoom buttons, image focal-point taps, and file selection work with touch input on iPhone and iPad.
 
 ### Replacing a Gallery Portal
 

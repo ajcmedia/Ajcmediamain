@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Reveal } from "@/components/Reveal";
+import { getImagePresentationStyle } from "@/lib/image-presentation";
 import type { SiteContent } from "@/types/site";
 
 const approachCards = [
@@ -39,8 +40,8 @@ export function AboutSection({ content }: { content: SiteContent["about"] }) {
         </Reveal>
 
         <Reveal className="lg:justify-self-end" delay={120}>
-          <div className="relative mx-auto w-full max-w-[min(88vw,420px)] overflow-hidden border border-white/15 bg-night shadow-glow lg:mx-0 xl:max-w-[460px]">
-            <Image className="h-auto w-full" src={content.portraitImage} alt={content.portraitAlt} width={768} height={1024} sizes="(max-width: 1024px) 88vw, 420px" priority />
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[min(88vw,420px)] overflow-hidden border border-white/15 bg-night shadow-glow lg:mx-0 xl:max-w-[460px]">
+            <Image className="object-cover" src={content.portraitImage} alt={content.portraitAlt} fill sizes="(max-width: 1024px) 88vw, 420px" priority style={getImagePresentationStyle(content.portraitPosition)} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5" />
             <div className="absolute bottom-5 left-5 border border-white/15 bg-night/80 px-3.5 py-3 text-sm font-black uppercase text-cyan">
               AJC / Vancouver / Photo

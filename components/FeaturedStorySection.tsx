@@ -48,7 +48,7 @@ export function FeaturedStorySection({ content }: { content: SiteContent["featur
           >
             {storyFrames.map((frame, index) => (
               <div key={frame.id} className="story-stage-frame absolute inset-0" data-active={activeFrame === index} aria-hidden={activeFrame !== index}>
-                <FramedImage className="story-stage-image transition duration-1000" src={frame.image} alt={frame.title} sizes="(max-width: 1024px) 100vw, 64vw" />
+                <FramedImage className="story-stage-image transition duration-1000" src={frame.image} alt={frame.title} position={frame.position} sizes="(max-width: 1024px) 100vw, 64vw" />
               </div>
             ))}
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-night/95 via-night/10 to-black/20" />
@@ -74,7 +74,7 @@ export function FeaturedStorySection({ content }: { content: SiteContent["featur
                 aria-current={activeFrame === index ? "step" : undefined}
               >
                 <span className="relative block aspect-square overflow-hidden bg-night">
-                  <FramedImage className="transition duration-700 group-hover:scale-[1.045]" src={frame.image} alt="" sizes="96px" />
+                  <FramedImage className="transition duration-700 group-hover:scale-[1.045]" src={frame.image} alt="" position={frame.position} sizes="96px" />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan">{String(index + 1).padStart(2, "0")} / {frame.eyebrow}</span>

@@ -1,10 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
@@ -19,6 +17,8 @@ export function AdminLoginForm() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
         body: JSON.stringify({ password })
       });
 
@@ -28,8 +28,9 @@ export function AdminLoginForm() {
       }
 
       setStatus("Access granted. Opening admin...");
-      router.push("/admin");
-      router.refresh();
+      // A full navigation guarantees that the protected request is made only
+      // after the browser has committed the session cookie from this response.
+      window.location.replace("/admin");
     } catch {
       setStatus("Could not verify the password right now.");
     } finally {

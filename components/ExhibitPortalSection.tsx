@@ -151,7 +151,7 @@ export function ExhibitPortalSection({ content }: { content: SiteContent["portal
                 resetCardPerspective(event);
               }}
             >
-              <FramedImage className="saturate-[0.82] transition duration-700 group-hover:scale-[1.035] group-hover:saturate-110" src={portal.image} alt={`${portal.title} photography portal`} sizes="(max-width: 768px) 100vw, 31vw" />
+              <FramedImage className="saturate-[0.82] transition duration-700 group-hover:scale-[1.035] group-hover:saturate-110" src={portal.image} alt={`${portal.title} photography portal`} position={portal.position} sizes="(max-width: 768px) 100vw, 31vw" />
               <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(5,7,11,0.4),transparent_38%,rgba(5,7,11,0.94)_92%)]" />
               <div className="portal-glow absolute inset-0 z-10 opacity-70 transition duration-500 group-hover:opacity-100" />
               <PortalWarpCanvas active={hoveredPortal === index} tone={index} className="pointer-events-none absolute inset-0 z-20 h-full w-full opacity-90" />
@@ -190,7 +190,7 @@ export function ExhibitPortalSection({ content }: { content: SiteContent["portal
       {warpPortal !== null ? (
         <div className="portal-warp-overlay" data-phase={warpPhase} data-tone={portals[warpPortal].color} aria-hidden="true">
           <div className="portal-warp-image">
-            <FramedImage src={portals[warpPortal].image} alt="" sizes="100vw" />
+            <FramedImage src={portals[warpPortal].image} alt="" position={portals[warpPortal].position} sizes="100vw" />
           </div>
           <PortalWarpCanvas active overlay tone={warpPortal} className="absolute inset-0 h-full w-full" />
           <div className="portal-warp-slices"><span /><span /><span /><span /><span /></div>

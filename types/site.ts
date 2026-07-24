@@ -5,6 +5,14 @@ export type GalleryCategory = {
   label: string;
 };
 
+export type ImagePosition = {
+  x: number;
+  y: number;
+  zoom?: number;
+};
+
+export type GalleryCropAspect = "original" | "landscape" | "square" | "portrait";
+
 export type PortfolioProject = {
   id: string;
   title: string;
@@ -12,6 +20,8 @@ export type PortfolioProject = {
   image: string;
   description: string;
   visible: boolean;
+  position?: ImagePosition;
+  cropAspect?: GalleryCropAspect;
 };
 
 export type GalleryPortal = {
@@ -21,6 +31,7 @@ export type GalleryPortal = {
   label: string;
   image: string;
   color: PortalTone;
+  position?: ImagePosition;
 };
 
 export type Service = {
@@ -29,6 +40,7 @@ export type Service = {
   description: string;
   image: string;
   icon: "camera" | "event" | "portrait" | "content";
+  position?: ImagePosition;
 };
 
 export type PricingPackage = {
@@ -44,6 +56,7 @@ export type ImageSlot = {
   id: string;
   image: string;
   alt: string;
+  position?: ImagePosition;
 };
 
 export type ExperienceScene = {
@@ -52,6 +65,7 @@ export type ExperienceScene = {
   title: string;
   copy: string;
   image: string;
+  position?: ImagePosition;
 };
 
 export type StoryFrame = {
@@ -61,12 +75,14 @@ export type StoryFrame = {
   title: string;
   copy: string;
   image: string;
+  position?: ImagePosition;
 };
 
 export type EditorialFrame = {
   id: string;
   title: string;
   image: string;
+  position?: ImagePosition;
 };
 
 export type SiteContent = {
@@ -74,12 +90,14 @@ export type SiteContent = {
   updatedAt: string;
   hero: {
     backgroundImage: string;
+    backgroundPosition?: ImagePosition;
     showcaseFrames: ImageSlot[];
     thumbnailFrames: ImageSlot[];
   };
   about: {
     portraitImage: string;
     portraitAlt: string;
+    portraitPosition?: ImagePosition;
   };
   experience: {
     eyebrow: string;
@@ -104,6 +122,7 @@ export type SiteContent = {
   };
   beforeAfter: {
     image: string;
+    position?: ImagePosition;
   };
   pricing: {
     eyebrow: string;
