@@ -18,6 +18,11 @@ import type {
 
 type TabId = "overview" | "requests" | "images" | "portals" | "gallery" | "pricing" | "story" | "editorial";
 type PublishNotice = { tone: "info" | "success" | "error"; message: string };
+type AdminSessionState = "checking" | "active" | "expired" | "offline";
+type AdminApiPayload = { error?: string; code?: string; requestId?: string };
+type AdminAuthEventDetail = { method: string; path: string; requestId?: string };
+
+const adminAuthRequiredEvent = "ajc:admin-auth-required";
 
 const tabs: Array<{ id: TabId; label: string; description: string }> = [
   { id: "overview", label: "Overview", description: "Website and inquiry status" },
@@ -37,12 +42,44 @@ const bookingStatuses: Array<{ value: BookingStatus; label: string }> = [
   { value: "archived", label: "Archived" }
 ];
 
-function adminFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, {
+async function adminFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const response = await fetch(input, {
     cache: "no-store",
     credentials: "same-origin",
     ...init
   });
+
+  if (response.status === 401 && typeof window !== "undefined") {
+    const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    window.dispatchEvent(new CustomEvent<AdminAuthEventDetail>(adminAuthRequiredEvent, {
+      detail: {
+        method: (init.method || "GET").toUpperCase(),
+        path,
+        requestId: response.headers.get("X-AJC-Request-Id") || undefined
+      }
+    }));
+  }
+
+  return response;
+}
+
+async function readAdminJson<T extends object>(response: Response) {
+  const payload = (await response.json().catch(() => ({}))) as T & AdminApiPayload;
+  const requestId = response.headers.get("X-AJC-Request-Id") || payload.requestId;
+  return requestId ? { ...payload, requestId } : payload;
+}
+
+function adminErrorMessage(response: Response, payload: AdminApiPayload, fallback: string) {
+  const message = payload.error || fallback;
+  const requestId = payload.requestId || response.headers.get("X-AJC-Request-Id");
+  return requestId && !message.includes(requestId) ? `${message} Reference: ${requestId}` : message;
+}
+
+function connectionErrorMessage(fallback: string) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return "This device is offline. Reconnect to the internet and try again; the current draft is still open.";
+  }
+  return `${fallback} The connection may have been interrupted while Safari was in the background. Keep this tab open and try again.`;
 }
 
 export function AdminDashboard({ initialContent }: { initialContent: SiteContent }) {
@@ -56,6 +93,12 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
   const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [sessionState, setSessionState] = useState<AdminSessionState>("checking");
+  const [authRequired, setAuthRequired] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthStatus, setReauthStatus] = useState("");
+  const [isReauthenticating, setIsReauthenticating] = useState(false);
+  const [retryPublishAfterAuth, setRetryPublishAfterAuth] = useState(false);
 
   const categoryLabels = useMemo(
     () => new Map(content.gallery.categories.map((category) => [category.id, category.label])),
@@ -70,25 +113,85 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
           adminFetch("/api/site-content"),
           adminFetch("/api/bookings")
         ]);
-        if (contentResponse.ok) {
-          const result = (await contentResponse.json()) as { content: SiteContent; databaseConfigured: boolean };
+        const contentResult = await readAdminJson<{ content?: SiteContent; databaseConfigured?: boolean }>(contentResponse);
+        if (contentResponse.ok && contentResult.content) {
           if (!cancelled) {
-            setContent(result.content);
-            setDatabaseConfigured(result.databaseConfigured);
+            setContent(contentResult.content);
+            setDatabaseConfigured(Boolean(contentResult.databaseConfigured));
           }
+        } else if (!cancelled) {
+          setStatus(adminErrorMessage(contentResponse, contentResult, "The website content could not be refreshed."));
         }
-        if (bookingResponse.ok) {
-          const result = (await bookingResponse.json()) as { bookings: BookingRequest[] };
-          if (!cancelled) setBookings(result.bookings);
+        const bookingResult = await readAdminJson<{ bookings?: BookingRequest[] }>(bookingResponse);
+        if (bookingResponse.ok && bookingResult.bookings) {
+          if (!cancelled) setBookings(bookingResult.bookings);
+        } else if (!cancelled && bookingResponse.status !== 401) {
+          setStatus(adminErrorMessage(bookingResponse, bookingResult, "Booking requests could not be refreshed."));
         }
       } catch {
-        if (!cancelled) setStatus("The dashboard could not refresh from the server.");
+        if (!cancelled) setStatus(connectionErrorMessage("The dashboard could not refresh from the server."));
       } finally {
         if (!cancelled) setIsLoadingBookings(false);
       }
     }
     loadDashboard();
     return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function handleAuthRequired(event: Event) {
+      if (cancelled) return;
+      const detail = (event as CustomEvent<AdminAuthEventDetail>).detail;
+      const isPublishRequest = detail?.method === "PUT" && detail.path.includes("/api/site-content");
+      const reference = detail?.requestId ? ` Reference: ${detail.requestId}` : "";
+
+      setSessionState("expired");
+      setAuthRequired(true);
+      setReauthStatus(`Your sign-in expired while this admin tab was open.${reference}`);
+      setStatus("Admin sign-in expired. Your current edits are still open.");
+      if (isPublishRequest) {
+        setRetryPublishAfterAuth(true);
+        setPublishNotice({ tone: "error", message: "Your sign-in expired. Re-enter the password above and publishing will retry automatically." });
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const response = await adminFetch(`/api/admin/session?check=${Date.now()}`, {
+          headers: { Accept: "application/json" }
+        });
+        if (!cancelled && response.ok) {
+          setSessionState("active");
+          setAuthRequired(false);
+        }
+      } catch {
+        if (!cancelled) setSessionState("offline");
+      }
+    }
+
+    function handlePageShow() {
+      void checkSession();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") void checkSession();
+    }
+
+    window.addEventListener(adminAuthRequiredEvent, handleAuthRequired);
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const interval = window.setInterval(checkSession, 15 * 60 * 1000);
+    void checkSession();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(adminAuthRequiredEvent, handleAuthRequired);
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(interval);
+    };
   }, []);
 
   function mutateContent(mutator: (draft: SiteContent) => void) {
@@ -101,6 +204,51 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
     });
   }
 
+  async function reauthenticate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsReauthenticating(true);
+    setReauthStatus("Restoring the admin session...");
+
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
+        body: JSON.stringify({ password: reauthPassword })
+      });
+      const result = await readAdminJson<AdminApiPayload>(response);
+      if (!response.ok) throw new Error(adminErrorMessage(response, result, "The password was not accepted."));
+
+      const sessionResponse = await fetch(`/api/admin/session?restore=${Date.now()}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Safari did not retain the restored session. Open the admin directly in Safari instead of Private Browsing or an in-app browser.");
+      }
+
+      const shouldRetryPublish = retryPublishAfterAuth;
+      setAuthRequired(false);
+      setSessionState("active");
+      setReauthPassword("");
+      setRetryPublishAfterAuth(false);
+      setReauthStatus("");
+      setStatus(shouldRetryPublish ? "Admin session restored. Retrying publish..." : "Admin session restored. You can continue editing.");
+
+      if (shouldRetryPublish) {
+        window.setTimeout(() => void saveContent(), 0);
+      }
+    } catch (error) {
+      setReauthStatus(error instanceof TypeError
+        ? connectionErrorMessage("The admin session could not be restored.")
+        : error instanceof Error ? error.message : "The admin session could not be restored.");
+    } finally {
+      setIsReauthenticating(false);
+    }
+  }
+
   async function saveContent() {
     setIsSaving(true);
     setStatus("Saving website content...");
@@ -111,15 +259,19 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(content)
       });
-      const result = (await response.json()) as { content?: SiteContent; error?: string };
-      if (!response.ok || !result.content) throw new Error(result.error || "Content could not be saved.");
+      const result = await readAdminJson<{ content?: SiteContent }>(response);
+      if (!response.ok || !result.content) {
+        throw new Error(adminErrorMessage(response, result, "Content could not be saved."));
+      }
       setContent(result.content);
       setStatus("Website content published successfully.");
       setHasUnpublishedChanges(false);
       setPublishNotice({ tone: "success", message: "Published successfully. The public website now has your latest changes." });
       router.refresh();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Content could not be saved.";
+      const message = error instanceof TypeError
+        ? connectionErrorMessage("Content could not be saved.")
+        : error instanceof Error ? error.message : "Content could not be saved.";
       setStatus(message);
       setPublishNotice({ tone: "error", message: `Publishing failed: ${message}` });
     } finally {
@@ -135,24 +287,32 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: booking.status, internalNotes: booking.internalNotes })
       });
-      const result = (await response.json()) as { booking?: BookingRequest; error?: string };
-      if (!response.ok || !result.booking) throw new Error(result.error || "Request could not be updated.");
+      const result = await readAdminJson<{ booking?: BookingRequest }>(response);
+      if (!response.ok || !result.booking) {
+        throw new Error(adminErrorMessage(response, result, "Request could not be updated."));
+      }
       setBookings((items) => items.map((item) => item.id === booking.id ? result.booking! : item));
       setStatus("Booking request updated.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Request could not be updated.");
+      setStatus(error instanceof TypeError
+        ? connectionErrorMessage("Request could not be updated.")
+        : error instanceof Error ? error.message : "Request could not be updated.");
     }
   }
 
   async function removeBooking(booking: BookingRequest) {
     if (!window.confirm(`Permanently delete the booking request from ${booking.name}?`)) return;
-    const response = await adminFetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
-    if (response.ok) {
-      setBookings((items) => items.filter((item) => item.id !== booking.id));
-      setStatus("Booking request deleted.");
-    } else {
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
-      setStatus(result.error || "Booking request could not be deleted.");
+    try {
+      const response = await adminFetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
+      if (response.ok) {
+        setBookings((items) => items.filter((item) => item.id !== booking.id));
+        setStatus("Booking request deleted.");
+      } else {
+        const result = await readAdminJson<AdminApiPayload>(response);
+        setStatus(adminErrorMessage(response, result, "Booking request could not be deleted."));
+      }
+    } catch {
+      setStatus(connectionErrorMessage("Booking request could not be deleted."));
     }
   }
 
@@ -203,6 +363,14 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
   }
 
   const newBookingCount = bookings.filter((booking) => booking.status === "new").length;
+  const statusIsError = /could not|failed|expired|offline|not accepted|interrupted/i.test(status);
+  const sessionLabel = sessionState === "active"
+    ? "Admin session active"
+    : sessionState === "expired"
+      ? "Sign-in required"
+      : sessionState === "offline"
+        ? "Connection interrupted"
+        : "Checking session";
 
   return (
     <main className="min-h-screen pb-20 pt-24">
@@ -213,11 +381,38 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
             <h1 className="max-w-[15ch] text-[clamp(2.2rem,5vw,4.8rem)] font-black leading-[0.94] text-ink">Manage the website without touching the layout.</h1>
           </div>
           <div className="flex flex-wrap gap-3">
+            <span className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-black ${sessionState === "active" ? "border-green/35 bg-green/10 text-green" : sessionState === "expired" ? "border-rose/40 bg-rose/10 text-rose" : "border-gold/35 bg-gold/10 text-gold"}`} role="status">
+              {sessionLabel}
+            </span>
             <a className="pill-button pill-button-ghost" href="/" target="_blank" rel="noreferrer">Preview website</a>
             <button className="pill-button border-white/15 text-muted" type="button" onClick={signOut}>Sign out</button>
           </div>
         </div>
-        <p className={`mt-4 min-h-6 ${status.toLowerCase().includes("could not") || status.toLowerCase().includes("before deleting") ? "text-rose" : "text-green"}`} role="status">{status}</p>
+        <p className={`mt-4 min-h-6 ${statusIsError || status.toLowerCase().includes("before deleting") ? "text-rose" : "text-green"}`} role="status">{status}</p>
+        {authRequired ? (
+          <form className="mt-4 grid gap-3 border border-rose/45 bg-rose/10 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.5fr)_auto] lg:items-end" onSubmit={reauthenticate}>
+            <div>
+              <strong className="block text-base font-black text-rose">Restore the admin session without losing this draft</strong>
+              <p className="mt-1 text-sm text-ink/72">{reauthStatus || "Safari may discard an expired session after the device has been locked or the tab has been in the background."}</p>
+            </div>
+            <label className="grid gap-1 text-sm font-extrabold text-ink/80">
+              Admin password
+              <input
+                className="form-control min-h-11 py-2"
+                type="password"
+                autoComplete="current-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={reauthPassword}
+                onChange={(event) => setReauthPassword(event.target.value)}
+                required
+              />
+            </label>
+            <button className="pill-button pill-button-primary min-h-11 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={isReauthenticating}>
+              {isReauthenticating ? "Restoring..." : "Restore session"}
+            </button>
+          </form>
+        ) : null}
       </header>
 
       <div className="grid gap-6 px-[clamp(18px,5vw,70px)] xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -679,12 +874,16 @@ function ImageField({ label, value, position, cropAspect, previewAspect = "lands
     formData.set("file", file);
     try {
       const response = await adminFetch("/api/media", { method: "POST", body: formData });
-      const result = (await response.json()) as { url?: string; error?: string; converted?: boolean };
-      if (!response.ok || !result.url) throw new Error(result.error || "Image upload failed.");
+      const result = await readAdminJson<{ url?: string; converted?: boolean }>(response);
+      if (!response.ok || !result.url) {
+        throw new Error(adminErrorMessage(response, result, "Image upload failed."));
+      }
       onChange(result.url);
       setStatus(result.converted ? "iPhone photo converted and uploaded. Publish website changes when the section is ready." : "Image uploaded. Publish website changes when the section is ready.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Image upload failed.");
+      setStatus(error instanceof TypeError
+        ? connectionErrorMessage("Image upload failed.")
+        : error instanceof Error ? error.message : "Image upload failed.");
     } finally {
       setUploading(false);
     }

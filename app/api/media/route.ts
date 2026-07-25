@@ -25,6 +25,7 @@ const extensionTypes: Record<string, string> = {
 class ImageUploadError extends Error {}
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get("X-AJC-Request-Id") || "unavailable";
   const formData = await request.formData().catch(() => null);
   const file = formData?.get("file");
   if (!(file instanceof File) || !file.size) {
@@ -63,19 +64,19 @@ export async function POST(request: Request) {
     if (error instanceof DatabaseConfigurationError) {
       return NextResponse.json({ error: error.message }, { status: 503 });
     }
-    console.error("Image upload failed", error);
+    console.error(`Image upload failed [${requestId}]`, error);
     return NextResponse.json({ error: "The image could not be processed or uploaded. Try a JPEG or PNG copy." }, { status: 500 });
   }
 }
 
 async function normalizeImage(file: File) {
   const extension = getExtension(file.name);
-  const contentType = normalizeContentType(file.type, extension);
+  const input = Buffer.from(await file.arrayBuffer());
+  const contentType = detectImageContentType(input, file.type, extension);
   if (!contentType || !allowedTypes.has(contentType)) {
     throw new ImageUploadError("Upload a JPEG, PNG, WebP, GIF, AVIF, HEIC, or HEIF image.");
   }
 
-  const input = Buffer.from(await file.arrayBuffer());
   const isApplePhoto = contentType === "image/heic" || contentType === "image/heif";
   let buffer = input;
   let outputType = contentType === "image/jpg" ? "image/jpeg" : contentType;
@@ -150,6 +151,25 @@ function normalizeContentType(type: string, extension: string) {
   const normalized = type.trim().toLowerCase();
   if (allowedTypes.has(normalized)) return normalized;
   return extensionTypes[extension] || "";
+}
+
+function detectImageContentType(input: Buffer, declaredType: string, extension: string) {
+  if (input.length >= 12) {
+    if (input[0] === 0xff && input[1] === 0xd8 && input[2] === 0xff) return "image/jpeg";
+    if (input.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+
+    const firstTwelve = input.subarray(0, 12).toString("ascii");
+    if (firstTwelve.startsWith("GIF87a") || firstTwelve.startsWith("GIF89a")) return "image/gif";
+    if (firstTwelve.startsWith("RIFF") && firstTwelve.slice(8, 12) === "WEBP") return "image/webp";
+
+    if (firstTwelve.slice(4, 8) === "ftyp") {
+      const brands = input.subarray(8, Math.min(input.length, 40)).toString("ascii");
+      if (/\b(?:avif|avis)\b/.test(brands)) return "image/avif";
+      if (/(?:heic|heix|hevc|hevx|heim|heis|mif1|msf1)/.test(brands)) return "image/heic";
+    }
+  }
+
+  return normalizeContentType(declaredType, extension);
 }
 
 function getExtension(fileName: string) {

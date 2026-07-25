@@ -1,28 +1,31 @@
 import { timingSafeEqual } from "crypto";
-import { NextResponse } from "next/server";
-
-const adminCookieName = "ajc_admin_session";
+import { adminCookieName, getAdminCookieOptions } from "@/lib/admin-session";
+import { createRequestId, noStoreJson } from "@/lib/api-response";
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminSessionToken = process.env.ADMIN_SESSION_TOKEN;
   if (!adminPassword || !adminSessionToken) {
-    return NextResponse.json({ error: "Admin access is not configured." }, { status: 503 });
+    return noStoreJson(
+      { error: "Admin access is not configured.", requestId },
+      { status: 503, headers: { "X-AJC-Request-Id": requestId } }
+    );
   }
 
   const payload = (await request.json().catch(() => ({}))) as { password?: string };
   if (!safeEqual(payload.password || "", adminPassword)) {
-    return NextResponse.json({ error: "Invalid password." }, { status: 401 });
+    return noStoreJson(
+      { error: "Invalid password.", requestId },
+      { status: 401, headers: { "X-AJC-Request-Id": requestId } }
+    );
   }
 
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(adminCookieName, adminSessionToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8
-  });
+  const response = noStoreJson(
+    { ok: true, requestId },
+    { headers: { "X-AJC-Request-Id": requestId } }
+  );
+  response.cookies.set(adminCookieName, adminSessionToken, getAdminCookieOptions());
   return response;
 }
 

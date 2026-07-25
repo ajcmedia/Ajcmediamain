@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 
+type LoginResult = { error?: string; requestId?: string };
+
 export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,14 +24,20 @@ export function AdminLoginForm() {
         body: JSON.stringify({ password })
       });
 
+      const result = (await response.json().catch(() => ({}))) as LoginResult;
       if (!response.ok) {
-        setStatus("That password did not unlock the admin room.");
+        const reference = result.requestId || response.headers.get("X-AJC-Request-Id");
+        setStatus(`${result.error || "That password did not unlock the admin room."}${reference ? ` Reference: ${reference}` : ""}`);
         return;
       }
 
-      setStatus("Access granted. Opening admin...");
-      // A full navigation guarantees that the protected request is made only
-      // after the browser has committed the session cookie from this response.
+      setStatus("Access granted. Confirming the Safari session...");
+      if (!(await confirmSessionCookie())) {
+        setStatus("Safari did not retain the admin session. Open this page directly in Safari (not Private Browsing or an in-app browser), allow website data for ajcmedia.ca, then try again.");
+        return;
+      }
+
+      setStatus("Access confirmed. Opening admin...");
       window.location.replace("/admin");
     } catch {
       setStatus("Could not verify the password right now.");
@@ -69,4 +77,22 @@ export function AdminLoginForm() {
       <p className="min-h-6 text-sm text-muted" role="status">{status}</p>
     </form>
   );
+}
+
+async function confirmSessionCookie() {
+  const delays = [0, 150, 450];
+  for (const delay of delays) {
+    if (delay) await new Promise((resolve) => window.setTimeout(resolve, delay));
+
+    const response = await fetch(`/api/admin/session?check=${Date.now()}`, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    }).catch(() => null);
+
+    if (response?.ok) return true;
+  }
+
+  return false;
 }

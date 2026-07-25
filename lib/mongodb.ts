@@ -22,8 +22,17 @@ export async function getDatabase(): Promise<Db> {
   }
 
   if (!globalForMongo.ajcMongoClientPromise) {
-    const client = new MongoClient(uri, { maxPoolSize: 10 });
-    globalForMongo.ajcMongoClientPromise = client.connect();
+    const client = new MongoClient(uri, {
+      maxPoolSize: 10,
+      connectTimeoutMS: 6_000,
+      serverSelectionTimeoutMS: 6_000,
+      socketTimeoutMS: 20_000
+    });
+    globalForMongo.ajcMongoClientPromise = client.connect().catch(async (error) => {
+      globalForMongo.ajcMongoClientPromise = undefined;
+      await client.close().catch(() => undefined);
+      throw error;
+    });
   }
 
   const client = await globalForMongo.ajcMongoClientPromise;

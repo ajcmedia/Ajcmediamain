@@ -63,8 +63,15 @@ Editor behavior:
 Apple compatibility:
 
 - Admin API requests explicitly include the first-party session cookie and bypass Safari’s response cache.
+- The dashboard verifies the session whenever an Apple device returns from the background and keeps an active session renewed while the editor remains open.
+- If the session expires, the password can be re-entered inside the dashboard without discarding the current draft; an interrupted publish retries automatically after access is restored.
 - The editor avoids `structuredClone()` and `crypto.randomUUID()` browser requirements so older supported Safari versions can still edit and create items.
+- Uploaded image bytes are checked directly, so iPhone photos are handled correctly even when Safari supplies an incorrect or missing HEIC content type.
 - Crop sliders, zoom buttons, image focal-point taps, and file selection work with touch input on iPhone and iPad.
+
+For the most reliable Apple-device workflow, open `https://www.ajcmedia.ca/admin-login` directly in Safari. Avoid Private Browsing and social-media in-app browsers because they can discard first-party website data when the app is suspended. Keep the Safari tab visible until a large image finishes uploading.
+
+Publishing and upload failures now include a short **Reference** value. Ask the affected admin to send the complete message or a screenshot containing that reference so the matching production request can be found in hosting logs.
 
 ### Replacing a Gallery Portal
 
