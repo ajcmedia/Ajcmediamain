@@ -1,6 +1,6 @@
 export const navItems = [
   { href: "/#experience", label: "Experience" },
-  { href: "/#portals", label: "Portals" },
+  { href: "/#portals", label: "Collections" },
   { href: "/#services", label: "Services" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#gallery", label: "Gallery" },

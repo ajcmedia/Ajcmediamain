@@ -49,7 +49,7 @@ export function AdminLoginForm() {
   return (
     <form className="glass-panel grid gap-4 p-[clamp(20px,4vw,34px)]" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <label className="text-sm font-extrabold text-ink/80" htmlFor="admin-password">Admin password</label>
+        <label className="text-sm font-medium text-ink/80" htmlFor="admin-password">Admin password</label>
         <div className="relative">
           <input
             id="admin-password"
@@ -61,7 +61,7 @@ export function AdminLoginForm() {
             required
           />
           <button
-            className="absolute inset-y-1.5 right-1.5 min-w-20 border border-white/15 bg-night/85 px-3 text-sm font-black text-cyan transition hover:border-cyan/45"
+            className="absolute inset-y-1.5 right-1.5 min-w-20 border border-ink/15 bg-night/85 px-3 text-sm font-medium text-cyan transition hover:border-cyan/45"
             type="button"
             aria-label={showPassword ? "Hide admin password" : "Show admin password"}
             aria-pressed={showPassword}

@@ -12,7 +12,8 @@ export const defaultSiteContent: SiteContent = {
   version: 1,
   updatedAt: "2026-07-17T00:00:00.000Z",
   hero: {
-    backgroundImage: "/assets/gallery/hero-lens.png",
+    backgroundImage: "/assets/gallery/wedding-waterfront.png",
+    backgroundPosition: { x: 50, y: 18, zoom: 1 },
     showcaseFrames: [
       { id: "hero-showcase-1", image: "/assets/gallery/reception-dance.png", alt: "Wedding reception photography sample" },
       { id: "hero-showcase-2", image: "/assets/gallery/wedding-waterfront.png", alt: "Waterfront wedding photography sample" },
@@ -75,7 +76,7 @@ export const defaultSiteContent: SiteContent = {
   },
   pricing: {
     eyebrow: "Pricing",
-    title: "Simple starting points for a sales-ready conversation.",
+    title: "Good photographs. Clear starting points.",
     description: "These starting packages make it easy to choose a direction, then refine coverage based on the event, location, and final deliverables.",
     packages: [
       { id: "pricing-portrait", label: "Portrait Pulse", price: "$250", description: "Best for personal portraits, couples, grad, or quick brand refreshes.", features: ["1 hour session", "25 edited images", "Private online gallery"], featured: false },
@@ -85,7 +86,7 @@ export const defaultSiteContent: SiteContent = {
   },
   editorial: {
     eyebrow: "Editorial Wall",
-    title: "An illuminated archive of real moments.",
+    title: "A few moments to linger on.",
     description: "A curated photo wall gives visitors the feeling of stepping inside a private exhibit before they open the full gallery.",
     frames: [
       { id: "editorial-1", title: "Reception Dance Energy", image: "/assets/gallery/reception-dance.png" },
@@ -100,8 +101,8 @@ export const defaultSiteContent: SiteContent = {
   },
   gallery: {
     eyebrow: "Gallery",
-    title: "Featured projects with a click-to-view lightbox.",
-    description: "The photographer can add more projects from the admin page. The future backend can hydrate this same component from an API or CMS.",
+    title: "Stories, beautifully kept.",
+    description: "Browse the collections, find a feeling, and open any photograph to take a closer look.",
     categories,
     projects: [
       { id: "starter-wedding", title: "Waterfront Wedding Glow", categoryId: "category-wedding", image: "/assets/gallery/wedding-waterfront.png", description: "A romantic Vancouver waterfront story with city lights, mountain air, and golden-hour portraits.", visible: true },

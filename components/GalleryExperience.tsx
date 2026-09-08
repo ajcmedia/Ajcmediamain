@@ -32,6 +32,19 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
     };
   }, [activeProject]);
 
+  useEffect(() => {
+    if (!activeProject) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = document.querySelector<HTMLElement>('.gallery-dialog');
+    dialog?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveProject(null);
+      if (event.key === 'Tab') { event.preventDefault(); dialog?.querySelector<HTMLButtonElement>('button')?.focus(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); previous?.focus(); };
+  }, [activeProject]);
+
   const visibleProjects = useMemo(
     () => projects.filter((project) => project.visible && (filter === "all" || project.categoryId === filter)),
     [filter, projects]
@@ -52,11 +65,11 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
       </div>
 
       <Reveal>
-        <div className="mb-6 flex flex-wrap gap-2.5" role="tablist" aria-label="Gallery filters">
+        <div className="mb-6 flex flex-wrap gap-2.5" role="group" aria-label="Gallery filters">
           {categories.map((category) => (
             <button
               key={category.id}
-              className={`min-h-10 rounded-full border px-4 py-2 transition ${filter === category.id ? "border-cyan/45 bg-cyan/15 text-ink" : "border-white/15 bg-white/5 text-ink/75 hover:border-cyan/45 hover:text-ink"}`}
+              className={`min-h-10 rounded-full border px-4 py-2 transition ${filter === category.id ? "border-cyan/45 bg-cyan/15 text-ink" : "border-ink/15 bg-white/5 text-ink/75 hover:border-cyan/45 hover:text-ink"}`}
               type="button"
               onClick={() => setFilter(category.id)}
               aria-pressed={filter === category.id}
@@ -70,11 +83,11 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
       <div className="columns-1 gap-5 md:columns-2 xl:columns-3">
         {visibleProjects.map((project, index) => (
           <Reveal key={project.id} className="mb-5 break-inside-avoid" delay={(index % 6) * 70}>
-            <article className="inline-block w-full overflow-hidden border border-white/15 bg-[rgba(9,15,25,0.78)] shadow-glow">
+            <article className="inline-block w-full overflow-hidden border border-ink/15 bg-white shadow-glow">
               <button className="group block w-full text-left" type="button" onClick={() => setActiveProject(project)} aria-label={`Open ${project.title}`}>
                 <GalleryProjectImage project={project} />
                 <div className="p-6">
-                  <small className="font-black uppercase text-gold">{categoryLabels.get(project.categoryId) || "Gallery"}</small>
+                  <small className="font-medium uppercase text-gold">{categoryLabels.get(project.categoryId) || "Gallery"}</small>
                   <h3 className="mt-2 text-[clamp(1.25rem,2.2vw,2rem)] font-bold leading-none text-ink">{project.title}</h3>
                   <p className="mt-3 body-copy">{project.description}</p>
                 </div>
@@ -85,22 +98,13 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
       </div>
 
       {activeProject ? (
-        <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/90 p-[clamp(18px,4vw,44px)]" role="dialog" aria-modal="true">
-          <div className="pointer-events-none absolute inset-0 z-0">
-            <div className="shutter-blade shutter-blade-top" />
-            <div className="shutter-blade shutter-blade-bottom" />
-            <div className="absolute left-1/2 top-1/2 h-[min(72vw,620px)] w-[min(72vw,620px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan/25" />
-            <div className="absolute left-1/2 top-1/2 h-[min(52vw,430px)] w-[min(52vw,430px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-gold/25" />
-          </div>
-          <button className="fixed right-6 top-6 z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-3xl text-ink" type="button" aria-label="Close gallery preview" onClick={() => setActiveProject(null)}>
+        <div className="gallery-dialog fixed inset-0 z-[80] grid place-items-center overflow-y-auto p-[clamp(18px,4vw,44px)]" role="dialog" aria-modal="true" aria-label={activeProject.title}>
+          <button className="fixed right-6 top-6 z-10 flex h-12 w-12 items-center justify-center rounded-full border border-ink/15 bg-white/10 text-3xl text-ink" type="button" aria-label="Close gallery preview" onClick={() => setActiveProject(null)}>
             &times;
           </button>
           <div className="relative z-10 grid justify-items-center">
-            <div className="relative border border-white/20 bg-night/70 p-2 shadow-[0_0_80px_rgba(61,229,255,0.16)]">
-              <img className="max-h-[76vh] w-auto max-w-full object-contain" src={activeProject.image} alt={activeProject.title} />
-              <div className="pointer-events-none absolute inset-5 border border-cyan/50" />
-              <div className="pointer-events-none absolute left-5 top-5 h-8 w-8 border-l-2 border-t-2 border-gold" />
-              <div className="pointer-events-none absolute bottom-5 right-5 h-8 w-8 border-b-2 border-r-2 border-gold" />
+            <div className="lightbox-image">
+              <img className="max-h-[65vh] w-auto max-w-full object-contain" src={activeProject.image} alt={activeProject.title} />
             </div>
             <div className="max-w-3xl text-center">
               <h3 className="mt-5 text-[clamp(1.7rem,4vw,3rem)] font-bold text-ink">{activeProject.title}</h3>
@@ -125,7 +129,7 @@ function GalleryProjectImage({ project }: { project: PortfolioProject }) {
   const isCropped = cropAspect !== "original";
 
   return (
-    <div className={`relative overflow-hidden border-b border-white/10 bg-night/80 ${galleryCropClasses[cropAspect]}`}>
+    <div className={`relative overflow-hidden border-b border-ink/10 bg-night/80 ${galleryCropClasses[cropAspect]}`}>
       <img
         className={`${isCropped ? "h-full w-full object-cover" : "h-auto w-full"} transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110`}
         src={project.image}

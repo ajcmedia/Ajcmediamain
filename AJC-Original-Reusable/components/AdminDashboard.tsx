@@ -1,0 +1,998 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { cloneJsonValue, createBrowserId } from "@/lib/browser-compat";
+import { getImagePresentationStyle, normalizeImagePosition } from "@/lib/image-presentation";
+import type {
+  BookingRequest,
+  BookingStatus,
+  GalleryCropAspect,
+  GalleryCategory,
+  GalleryPortal,
+  ImagePosition,
+  PortfolioProject,
+  PricingPackage,
+  SiteContent
+} from "@/types/site";
+
+type TabId = "overview" | "requests" | "images" | "portals" | "gallery" | "pricing" | "story" | "editorial";
+type PublishNotice = { tone: "info" | "success" | "error"; message: string };
+type AdminSessionState = "checking" | "active" | "expired" | "offline";
+type AdminApiPayload = { error?: string; code?: string; requestId?: string };
+type AdminAuthEventDetail = { method: string; path: string; requestId?: string };
+
+const adminAuthRequiredEvent = "ajc:admin-auth-required";
+
+const tabs: Array<{ id: TabId; label: string; description: string }> = [
+  { id: "overview", label: "Overview", description: "Website and inquiry status" },
+  { id: "requests", label: "Booking Requests", description: "Reply queue and internal notes" },
+  { id: "images", label: "Site Images", description: "Hero, About, reel, and services" },
+  { id: "portals", label: "Gallery Portals", description: "Three connected Gallery entrances" },
+  { id: "gallery", label: "Gallery", description: "Categories and portfolio projects" },
+  { id: "pricing", label: "Pricing", description: "Packages and featured offer" },
+  { id: "story", label: "Featured Story", description: "Interactive story frames" },
+  { id: "editorial", label: "Editorial Wall", description: "Curated archive frames" }
+];
+
+const bookingStatuses: Array<{ value: BookingStatus; label: string }> = [
+  { value: "new", label: "New" },
+  { value: "in-progress", label: "In progress" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" }
+];
+
+async function adminFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const response = await fetch(input, {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...init
+  });
+
+  if (response.status === 401 && typeof window !== "undefined") {
+    const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    window.dispatchEvent(new CustomEvent<AdminAuthEventDetail>(adminAuthRequiredEvent, {
+      detail: {
+        method: (init.method || "GET").toUpperCase(),
+        path,
+        requestId: response.headers.get("X-AJC-Request-Id") || undefined
+      }
+    }));
+  }
+
+  return response;
+}
+
+async function readAdminJson<T extends object>(response: Response) {
+  const payload = (await response.json().catch(() => ({}))) as T & AdminApiPayload;
+  const requestId = response.headers.get("X-AJC-Request-Id") || payload.requestId;
+  return requestId ? { ...payload, requestId } : payload;
+}
+
+function adminErrorMessage(response: Response, payload: AdminApiPayload, fallback: string) {
+  const message = payload.error || fallback;
+  const requestId = payload.requestId || response.headers.get("X-AJC-Request-Id");
+  return requestId && !message.includes(requestId) ? `${message} Reference: ${requestId}` : message;
+}
+
+function connectionErrorMessage(fallback: string) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return "This device is offline. Reconnect to the internet and try again; the current draft is still open.";
+  }
+  return `${fallback} The connection may have been interrupted while Safari was in the background. Keep this tab open and try again.`;
+}
+
+export function AdminDashboard({ initialContent }: { initialContent: SiteContent }) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [content, setContent] = useState<SiteContent>(() => cloneJsonValue(initialContent));
+  const [bookings, setBookings] = useState<BookingRequest[]>([]);
+  const [databaseConfigured, setDatabaseConfigured] = useState(false);
+  const [status, setStatus] = useState("");
+  const [publishNotice, setPublishNotice] = useState<PublishNotice | null>(null);
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [sessionState, setSessionState] = useState<AdminSessionState>("checking");
+  const [authRequired, setAuthRequired] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthStatus, setReauthStatus] = useState("");
+  const [isReauthenticating, setIsReauthenticating] = useState(false);
+  const [retryPublishAfterAuth, setRetryPublishAfterAuth] = useState(false);
+
+  const categoryLabels = useMemo(
+    () => new Map(content.gallery.categories.map((category) => [category.id, category.label])),
+    [content.gallery.categories]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDashboard() {
+      try {
+        const [contentResponse, bookingResponse] = await Promise.all([
+          adminFetch("/api/site-content"),
+          adminFetch("/api/bookings")
+        ]);
+        const contentResult = await readAdminJson<{ content?: SiteContent; databaseConfigured?: boolean }>(contentResponse);
+        if (contentResponse.ok && contentResult.content) {
+          if (!cancelled) {
+            setContent(contentResult.content);
+            setDatabaseConfigured(Boolean(contentResult.databaseConfigured));
+          }
+        } else if (!cancelled) {
+          setStatus(adminErrorMessage(contentResponse, contentResult, "The website content could not be refreshed."));
+        }
+        const bookingResult = await readAdminJson<{ bookings?: BookingRequest[] }>(bookingResponse);
+        if (bookingResponse.ok && bookingResult.bookings) {
+          if (!cancelled) setBookings(bookingResult.bookings);
+        } else if (!cancelled && bookingResponse.status !== 401) {
+          setStatus(adminErrorMessage(bookingResponse, bookingResult, "Booking requests could not be refreshed."));
+        }
+      } catch {
+        if (!cancelled) setStatus(connectionErrorMessage("The dashboard could not refresh from the server."));
+      } finally {
+        if (!cancelled) setIsLoadingBookings(false);
+      }
+    }
+    loadDashboard();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function handleAuthRequired(event: Event) {
+      if (cancelled) return;
+      const detail = (event as CustomEvent<AdminAuthEventDetail>).detail;
+      const isPublishRequest = detail?.method === "PUT" && detail.path.includes("/api/site-content");
+      const reference = detail?.requestId ? ` Reference: ${detail.requestId}` : "";
+
+      setSessionState("expired");
+      setAuthRequired(true);
+      setReauthStatus(`Your sign-in expired while this admin tab was open.${reference}`);
+      setStatus("Admin sign-in expired. Your current edits are still open.");
+      if (isPublishRequest) {
+        setRetryPublishAfterAuth(true);
+        setPublishNotice({ tone: "error", message: "Your sign-in expired. Re-enter the password above and publishing will retry automatically." });
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const response = await adminFetch(`/api/admin/session?check=${Date.now()}`, {
+          headers: { Accept: "application/json" }
+        });
+        if (!cancelled && response.ok) {
+          setSessionState("active");
+          setAuthRequired(false);
+        }
+      } catch {
+        if (!cancelled) setSessionState("offline");
+      }
+    }
+
+    function handlePageShow() {
+      void checkSession();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") void checkSession();
+    }
+
+    window.addEventListener(adminAuthRequiredEvent, handleAuthRequired);
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const interval = window.setInterval(checkSession, 15 * 60 * 1000);
+    void checkSession();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(adminAuthRequiredEvent, handleAuthRequired);
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  function mutateContent(mutator: (draft: SiteContent) => void) {
+    setHasUnpublishedChanges(true);
+    setPublishNotice(null);
+    setContent((current) => {
+      const next = cloneJsonValue(current);
+      mutator(next);
+      return next;
+    });
+  }
+
+  async function reauthenticate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsReauthenticating(true);
+    setReauthStatus("Restoring the admin session...");
+
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
+        body: JSON.stringify({ password: reauthPassword })
+      });
+      const result = await readAdminJson<AdminApiPayload>(response);
+      if (!response.ok) throw new Error(adminErrorMessage(response, result, "The password was not accepted."));
+
+      const sessionResponse = await fetch(`/api/admin/session?restore=${Date.now()}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Safari did not retain the restored session. Open the admin directly in Safari instead of Private Browsing or an in-app browser.");
+      }
+
+      const shouldRetryPublish = retryPublishAfterAuth;
+      setAuthRequired(false);
+      setSessionState("active");
+      setReauthPassword("");
+      setRetryPublishAfterAuth(false);
+      setReauthStatus("");
+      setStatus(shouldRetryPublish ? "Admin session restored. Retrying publish..." : "Admin session restored. You can continue editing.");
+
+      if (shouldRetryPublish) {
+        window.setTimeout(() => void saveContent(), 0);
+      }
+    } catch (error) {
+      setReauthStatus(error instanceof TypeError
+        ? connectionErrorMessage("The admin session could not be restored.")
+        : error instanceof Error ? error.message : "The admin session could not be restored.");
+    } finally {
+      setIsReauthenticating(false);
+    }
+  }
+
+  async function saveContent() {
+    setIsSaving(true);
+    setStatus("Saving website content...");
+    setPublishNotice({ tone: "info", message: "Publishing your website changes..." });
+    try {
+      const response = await adminFetch("/api/site-content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(content)
+      });
+      const result = await readAdminJson<{ content?: SiteContent }>(response);
+      if (!response.ok || !result.content) {
+        throw new Error(adminErrorMessage(response, result, "Content could not be saved."));
+      }
+      setContent(result.content);
+      setStatus("Website content published successfully.");
+      setHasUnpublishedChanges(false);
+      setPublishNotice({ tone: "success", message: "Published successfully. The public website now has your latest changes." });
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof TypeError
+        ? connectionErrorMessage("Content could not be saved.")
+        : error instanceof Error ? error.message : "Content could not be saved.";
+      setStatus(message);
+      setPublishNotice({ tone: "error", message: `Publishing failed: ${message}` });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function saveBooking(booking: BookingRequest) {
+    setStatus(`Saving ${booking.name}'s request...`);
+    try {
+      const response = await adminFetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: booking.status, internalNotes: booking.internalNotes })
+      });
+      const result = await readAdminJson<{ booking?: BookingRequest }>(response);
+      if (!response.ok || !result.booking) {
+        throw new Error(adminErrorMessage(response, result, "Request could not be updated."));
+      }
+      setBookings((items) => items.map((item) => item.id === booking.id ? result.booking! : item));
+      setStatus("Booking request updated.");
+    } catch (error) {
+      setStatus(error instanceof TypeError
+        ? connectionErrorMessage("Request could not be updated.")
+        : error instanceof Error ? error.message : "Request could not be updated.");
+    }
+  }
+
+  async function removeBooking(booking: BookingRequest) {
+    if (!window.confirm(`Permanently delete the booking request from ${booking.name}?`)) return;
+    try {
+      const response = await adminFetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
+      if (response.ok) {
+        setBookings((items) => items.filter((item) => item.id !== booking.id));
+        setStatus("Booking request deleted.");
+      } else {
+        const result = await readAdminJson<AdminApiPayload>(response);
+        setStatus(adminErrorMessage(response, result, "Booking request could not be deleted."));
+      }
+    } catch {
+      setStatus(connectionErrorMessage("Booking request could not be deleted."));
+    }
+  }
+
+  async function signOut() {
+    await adminFetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin-login");
+    router.refresh();
+  }
+
+  function removePortalAndCategory(portal: GalleryPortal) {
+    const linkedProjects = content.gallery.projects.filter((project) => project.categoryId === portal.categoryId);
+    if (linkedProjects.length) {
+      setStatus(`Reassign or delete the ${linkedProjects.length} Gallery item(s) in “${categoryLabels.get(portal.categoryId)}” before deleting this portal.`);
+      setActiveTab("gallery");
+      return;
+    }
+    if (!window.confirm("Remove this portal and its connected Gallery category from the draft? You must add a replacement before publishing.")) return;
+    mutateContent((draft) => {
+      draft.portals.items = draft.portals.items.filter((item) => item.id !== portal.id);
+      const stillUsed = draft.portals.items.some((item) => item.categoryId === portal.categoryId);
+      if (!stillUsed) draft.gallery.categories = draft.gallery.categories.filter((item) => item.id !== portal.categoryId);
+    });
+    setStatus("Portal removed from the draft. Add a replacement to return to three before publishing.");
+  }
+
+  function addPortal() {
+    if (content.portals.items.length >= 3) {
+      setStatus("The public website is limited to exactly three Gallery Portals.");
+      return;
+    }
+    const categoryId = createId("category");
+    mutateContent((draft) => {
+      draft.gallery.categories.push({ id: categoryId, label: "New category" });
+      draft.portals.items.push({ id: createId("portal"), categoryId, title: "New category", label: "Describe this story", image: "/assets/gallery/wedding-waterfront.png", color: "cyan" });
+    });
+    setStatus("Replacement portal added. Edit its category, image, and wording before publishing.");
+  }
+
+  function deleteCategory(category: GalleryCategory) {
+    const portal = content.portals.items.find((item) => item.categoryId === category.id);
+    const projectCount = content.gallery.projects.filter((item) => item.categoryId === category.id).length;
+    if (portal || projectCount) {
+      setStatus(`“${category.label}” cannot be deleted while it is linked to ${portal ? "a portal" : ""}${portal && projectCount ? " and " : ""}${projectCount ? `${projectCount} Gallery item(s)` : ""}.`);
+      return;
+    }
+    if (!window.confirm(`Delete the unused “${category.label}” category?`)) return;
+    mutateContent((draft) => { draft.gallery.categories = draft.gallery.categories.filter((item) => item.id !== category.id); });
+  }
+
+  const newBookingCount = bookings.filter((booking) => booking.status === "new").length;
+  const statusIsError = /could not|failed|expired|offline|not accepted|interrupted/i.test(status);
+  const sessionLabel = sessionState === "active"
+    ? "Admin session active"
+    : sessionState === "expired"
+      ? "Sign-in required"
+      : sessionState === "offline"
+        ? "Connection interrupted"
+        : "Checking session";
+
+  return (
+    <main className="min-h-screen pb-20 pt-24">
+      <header className="px-[clamp(18px,5vw,70px)] pb-8">
+        <div className="flex flex-col gap-5 border-b border-white/15 pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">AJC Media control room</p>
+            <h1 className="max-w-[15ch] text-[clamp(2.2rem,5vw,4.8rem)] font-black leading-[0.94] text-ink">Manage the website without touching the layout.</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <span className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-black ${sessionState === "active" ? "border-green/35 bg-green/10 text-green" : sessionState === "expired" ? "border-rose/40 bg-rose/10 text-rose" : "border-gold/35 bg-gold/10 text-gold"}`} role="status">
+              {sessionLabel}
+            </span>
+            <a className="pill-button pill-button-ghost" href="/" target="_blank" rel="noreferrer">Preview website</a>
+            <button className="pill-button border-white/15 text-muted" type="button" onClick={signOut}>Sign out</button>
+          </div>
+        </div>
+        <p className={`mt-4 min-h-6 ${statusIsError || status.toLowerCase().includes("before deleting") ? "text-rose" : "text-green"}`} role="status">{status}</p>
+        {authRequired ? (
+          <form className="mt-4 grid gap-3 border border-rose/45 bg-rose/10 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.5fr)_auto] lg:items-end" onSubmit={reauthenticate}>
+            <div>
+              <strong className="block text-base font-black text-rose">Restore the admin session without losing this draft</strong>
+              <p className="mt-1 text-sm text-ink/72">{reauthStatus || "Safari may discard an expired session after the device has been locked or the tab has been in the background."}</p>
+            </div>
+            <label className="grid gap-1 text-sm font-extrabold text-ink/80">
+              Admin password
+              <input
+                className="form-control min-h-11 py-2"
+                type="password"
+                autoComplete="current-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={reauthPassword}
+                onChange={(event) => setReauthPassword(event.target.value)}
+                required
+              />
+            </label>
+            <button className="pill-button pill-button-primary min-h-11 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={isReauthenticating}>
+              {isReauthenticating ? "Restoring..." : "Restore session"}
+            </button>
+          </form>
+        ) : null}
+      </header>
+
+      <div className="grid gap-6 px-[clamp(18px,5vw,70px)] xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="glass-panel h-fit p-3 xl:sticky xl:top-24">
+          <nav className="grid gap-1" aria-label="Admin sections">
+            {tabs.map((tab) => (
+              <button key={tab.id} className={`border px-4 py-3 text-left transition ${activeTab === tab.id ? "border-cyan/45 bg-cyan/10 text-ink" : "border-transparent text-ink/72 hover:border-white/15 hover:bg-white/[0.04]"}`} type="button" onClick={() => setActiveTab(tab.id)}>
+                <span className="block font-black">{tab.label}{tab.id === "requests" && newBookingCount ? ` (${newBookingCount})` : ""}</span>
+                <span className="mt-1 block text-xs text-muted">{tab.description}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="min-w-0">
+          {activeTab === "overview" ? <Overview content={content} bookings={bookings} databaseConfigured={databaseConfigured} isLoadingBookings={isLoadingBookings} onOpen={setActiveTab} /> : null}
+          {activeTab === "requests" ? <BookingManager bookings={bookings} onChange={setBookings} onSave={saveBooking} onDelete={removeBooking} isLoading={isLoadingBookings} /> : null}
+          {activeTab === "images" ? <SiteImageManager content={content} mutate={mutateContent} setStatus={setStatus} /> : null}
+          {activeTab === "portals" ? <PortalManager content={content} mutate={mutateContent} onAdd={addPortal} onDelete={removePortalAndCategory} setStatus={setStatus} /> : null}
+          {activeTab === "gallery" ? <GalleryManager content={content} mutate={mutateContent} onDeleteCategory={deleteCategory} setStatus={setStatus} /> : null}
+          {activeTab === "pricing" ? <PricingManager content={content} mutate={mutateContent} setStatus={setStatus} /> : null}
+          {activeTab === "story" ? <StoryManager content={content} mutate={mutateContent} setStatus={setStatus} /> : null}
+          {activeTab === "editorial" ? <EditorialManager content={content} mutate={mutateContent} setStatus={setStatus} /> : null}
+
+          {activeTab !== "overview" && activeTab !== "requests" ? (
+            <div className={`sticky bottom-4 z-40 mt-6 flex flex-col gap-3 border bg-night/95 p-4 shadow-glow backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between ${publishNotice?.tone === "success" ? "border-green/45" : publishNotice?.tone === "error" ? "border-rose/55" : "border-cyan/25"}`}>
+              <div
+                className="min-w-0"
+                role={publishNotice?.tone === "error" ? "alert" : "status"}
+                aria-live="polite"
+                data-publish-status={publishNotice?.tone || (hasUnpublishedChanges ? "draft" : "idle")}
+              >
+                <strong className={`block text-sm font-black ${publishNotice?.tone === "success" ? "text-green" : publishNotice?.tone === "error" ? "text-rose" : hasUnpublishedChanges ? "text-gold" : "text-cyan"}`}>
+                  {publishNotice?.tone === "success" ? "Changes published" : publishNotice?.tone === "error" ? "Could not publish" : hasUnpublishedChanges ? "Unpublished changes" : "Website is up to date"}
+                </strong>
+                <p className="mt-1 text-sm text-muted">
+                  {publishNotice?.message || (hasUnpublishedChanges ? "Your edits are saved in this draft until you publish them." : "Make an edit to enable publishing.")}
+                </p>
+              </div>
+              <button className="pill-button pill-button-primary shrink-0 disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={saveContent} disabled={isSaving || !hasUnpublishedChanges}>
+                {isSaving ? "Publishing..." : "Publish website changes"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function Overview({ content, bookings, databaseConfigured, isLoadingBookings, onOpen }: { content: SiteContent; bookings: BookingRequest[]; databaseConfigured: boolean; isLoadingBookings: boolean; onOpen: (tab: TabId) => void }) {
+  const cards = [
+    { label: "New inquiries", value: bookings.filter((item) => item.status === "new").length, tab: "requests" as TabId },
+    { label: "Gallery projects", value: content.gallery.projects.length, tab: "gallery" as TabId },
+    { label: "Published portals", value: content.portals.items.length, tab: "portals" as TabId },
+    { label: "Pricing packages", value: content.pricing.packages.length, tab: "pricing" as TabId }
+  ];
+  return (
+    <section className="grid gap-5">
+      <Panel title="Dashboard overview" copy="Everything here controls existing content slots; the public design and interactions remain unchanged.">
+        <div className={`border p-4 ${databaseConfigured ? "border-green/35 bg-green/5 text-green" : "border-gold/35 bg-gold/5 text-gold"}`}>
+          {databaseConfigured ? "MongoDB is configured. Content, uploads, and requests are persistent." : "MongoDB is not configured yet. The public site is safely using its built-in content; publishing and uploads will activate after the environment variables are added."}
+        </div>
+      </Panel>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => (
+          <button key={card.label} className="glass-panel p-5 text-left transition hover:border-cyan/45" type="button" onClick={() => onOpen(card.tab)}>
+            <strong className="block text-4xl font-black text-ink">{isLoadingBookings && card.tab === "requests" ? "—" : card.value}</strong>
+            <span className="mt-2 block text-sm uppercase text-muted">{card.label}</span>
+          </button>
+        ))}
+      </div>
+      <Panel title="Connected content model" copy="Portal links use stable category IDs. Renaming a category never breaks its portal, filter, or assigned photographs.">
+        <div className="grid gap-3 md:grid-cols-3">
+          {content.portals.items.map((portal) => (
+            <div key={portal.id} className="border border-white/15 bg-white/[0.04] p-4">
+              <p className="font-black text-ink">{portal.title}</p>
+              <p className="mt-1 text-sm text-muted">Gallery filter: {content.gallery.categories.find((category) => category.id === portal.categoryId)?.label}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
+    </section>
+  );
+}
+
+function BookingManager({ bookings, onChange, onSave, onDelete, isLoading }: { bookings: BookingRequest[]; onChange: (bookings: BookingRequest[]) => void; onSave: (booking: BookingRequest) => void; onDelete: (booking: BookingRequest) => void; isLoading: boolean }) {
+  const [filter, setFilter] = useState<BookingStatus | "all">("all");
+  const visible = filter === "all" ? bookings : bookings.filter((booking) => booking.status === filter);
+  function patch(id: string, changes: Partial<BookingRequest>) {
+    onChange(bookings.map((booking) => booking.id === id ? { ...booking, ...changes } : booking));
+  }
+  return (
+    <Panel title="Booking requests" copy="Every public form submission is saved here and also emailed when SMTP is configured.">
+      <div className="mb-5 flex flex-wrap gap-2">
+        {[{ value: "all", label: "All" }, ...bookingStatuses].map((option) => (
+          <button key={option.value} className={`rounded-full border px-3 py-2 text-sm ${filter === option.value ? "border-cyan/45 bg-cyan/10 text-ink" : "border-white/15 text-muted"}`} type="button" onClick={() => setFilter(option.value as BookingStatus | "all")}>{option.label}</button>
+        ))}
+      </div>
+      {isLoading ? <p className="body-copy">Loading booking requests...</p> : null}
+      {!isLoading && !visible.length ? <p className="body-copy">No booking requests in this view.</p> : null}
+      <div className="grid gap-4">
+        {visible.map((booking) => (
+          <article key={booking.id} className="border border-white/15 bg-white/[0.035] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan">{new Date(booking.createdAt).toLocaleString()}</p>
+                <h3 className="mt-2 text-2xl font-black text-ink">{booking.name}</h3>
+                <p className="mt-1 text-muted"><a className="text-cyan" href={`mailto:${booking.email}`}>{booking.email}</a>{booking.phone ? ` · ${booking.phone}` : ""}</p>
+              </div>
+              <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black uppercase ${booking.emailSent ? "border-green/35 text-green" : "border-gold/35 text-gold"}`}>{booking.emailSent ? "Email sent" : "Email pending"}</span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Detail label="Shoot type" value={booking.type} />
+              <Detail label="Preferred date" value={booking.date} />
+              <Detail label="Budget" value={booking.budget} />
+            </div>
+            <p className="mt-4 whitespace-pre-wrap border-l-2 border-cyan/35 pl-4 text-ink/80">{booking.message}</p>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+              <Field label="Request status"><select className="form-control" value={booking.status} onChange={(event) => patch(booking.id, { status: event.target.value as BookingStatus })}>{bookingStatuses.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+              <Field label="Private notes"><textarea className="form-control min-h-24" value={booking.internalNotes} onChange={(event) => patch(booking.id, { internalNotes: event.target.value })} placeholder="Call outcome, follow-up date, or quote notes..." /></Field>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button className="pill-button pill-button-primary min-h-10 px-4 py-2" type="button" onClick={() => onSave(booking)}>Save request</button>
+              <a className="pill-button pill-button-ghost min-h-10 px-4 py-2" href={`mailto:${booking.email}?subject=${encodeURIComponent("Your AJC Media booking request")}`}>Reply by email</a>
+              <button className="pill-button min-h-10 border-rose/35 px-4 py-2 text-rose" type="button" onClick={() => onDelete(booking)}>Delete permanently</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function SiteImageManager({ content, mutate, setStatus }: EditorProps) {
+  return (
+    <div className="grid gap-5">
+      <Panel title="Hero images" copy="Replace each image, give it a useful description, and set the focal point used by the public composition.">
+        <ImageField label="Hero background" value={content.hero.backgroundImage} position={content.hero.backgroundPosition} onChange={(image) => mutate((draft) => { draft.hero.backgroundImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.backgroundPosition = position; })} setStatus={setStatus} />
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {content.hero.showcaseFrames.map((frame, index) => (
+            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
+              <TextField label={`Showcase ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.showcaseFrames[index].alt = value; })} />
+              <ImageField label={`Showcase frame ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.showcaseFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.showcaseFrames[index].position = position; })} setStatus={setStatus} />
+            </div>
+          ))}
+          {content.hero.thumbnailFrames.map((frame, index) => (
+            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
+              <TextField label={`Thumbnail ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.thumbnailFrames[index].alt = value; })} />
+              <ImageField label={`Strip thumbnail ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.thumbnailFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.thumbnailFrames[index].position = position; })} setStatus={setStatus} />
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <Panel title="About and editing comparison" copy="Replace the images, rename the portrait description, and choose the part of each photograph that stays in frame.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid content-start gap-3">
+            <TextField label="Portrait name / description" value={content.about.portraitAlt} onChange={(value) => mutate((draft) => { draft.about.portraitAlt = value; })} />
+            <ImageField label="About portrait" value={content.about.portraitImage} position={content.about.portraitPosition} previewAspect="portrait" onChange={(image) => mutate((draft) => { draft.about.portraitImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.about.portraitPosition = position; })} setStatus={setStatus} />
+          </div>
+          <ImageField label="Before/after photograph" value={content.beforeAfter.image} position={content.beforeAfter.position} onChange={(image) => mutate((draft) => { draft.beforeAfter.image = image; })} onPositionChange={(position) => mutate((draft) => { draft.beforeAfter.position = position; })} setStatus={setStatus} />
+        </div>
+      </Panel>
+      <Panel title="Experience reel" copy="Add, edit, remove, or reorder scenes in the existing scroll experience.">
+        <SectionCopy content={content.experience} onChange={(key, value) => mutate((draft) => { draft.experience[key] = value; })} />
+        <div className="mt-5 grid gap-4">
+          {content.experience.scenes.map((scene, index) => (
+            <ItemCard key={scene.id} title={scene.title || `Scene ${index + 1}`} index={index} count={content.experience.scenes.length} onMove={(direction) => mutate((draft) => { draft.experience.scenes = moveItem(draft.experience.scenes, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.experience.scenes = moveItemTo(draft.experience.scenes, index, target); })} onDelete={() => content.experience.scenes.length > 1 ? mutate((draft) => { draft.experience.scenes.splice(index, 1); }) : setStatus("The experience reel needs at least one scene.")}>
+              <div className="grid gap-4 md:grid-cols-2"><TextField label="Scene label" value={scene.label} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].label = value; })} /><TextField label="Title" value={scene.title} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].title = value; })} /><TextArea label="Description" value={scene.copy} onChange={(value) => mutate((draft) => { draft.experience.scenes[index].copy = value; })} /><ImageField label="Scene image" value={scene.image} position={scene.position} onChange={(image) => mutate((draft) => { draft.experience.scenes[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.experience.scenes[index].position = position; })} setStatus={setStatus} /></div>
+            </ItemCard>
+          ))}
+        </div>
+        <AddButton label="Add experience scene" onClick={() => mutate((draft) => { draft.experience.scenes.push({ id: createId("experience"), label: `Scene ${String(draft.experience.scenes.length + 1).padStart(2, "0")}`, title: "New scene", copy: "Describe this moment.", image: "/assets/gallery/wedding-details.png" }); })} />
+      </Panel>
+      <Panel title="Services images" copy="Service cards keep the same presentation while their photographs and wording can be maintained here.">
+        <div className="grid gap-4">
+          {content.services.items.map((service, index) => (
+            <ItemCard key={service.id} title={service.title} index={index} count={content.services.items.length} onMove={(direction) => mutate((draft) => { draft.services.items = moveItem(draft.services.items, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.services.items = moveItemTo(draft.services.items, index, target); })} onDelete={() => content.services.items.length > 1 ? mutate((draft) => { draft.services.items.splice(index, 1); }) : setStatus("At least one service is required.")}>
+              <div className="grid gap-4 md:grid-cols-2"><TextField label="Service title" value={service.title} onChange={(value) => mutate((draft) => { draft.services.items[index].title = value; })} /><Field label="Icon"><select className="form-control" value={service.icon} onChange={(event) => mutate((draft) => { draft.services.items[index].icon = event.target.value as typeof service.icon; })}><option value="camera">Camera</option><option value="event">Event</option><option value="portrait">Portrait</option><option value="content">Content</option></select></Field><TextArea label="Description" value={service.description} onChange={(value) => mutate((draft) => { draft.services.items[index].description = value; })} /><ImageField label="Service image" value={service.image} position={service.position} onChange={(image) => mutate((draft) => { draft.services.items[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.services.items[index].position = position; })} setStatus={setStatus} /></div>
+            </ItemCard>
+          ))}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+function PortalManager({ content, mutate, onAdd, onDelete, setStatus }: EditorProps & { onAdd: () => void; onDelete: (portal: GalleryPortal) => void }) {
+  return (
+    <Panel title="Gallery Portals" copy="Exactly three portals are published. Each points to a category by ID, so its Gallery filter remains connected even when wording changes.">
+      <SectionCopy content={content.portals} onChange={(key, value) => mutate((draft) => { draft.portals[key] = value; })} />
+      <div className={`my-5 border p-4 ${content.portals.items.length === 3 ? "border-green/35 text-green" : "border-gold/35 text-gold"}`}>{content.portals.items.length}/3 portal slots prepared. Publishing is allowed only when all three slots are present.</div>
+      <div className="grid gap-4">
+        {content.portals.items.map((portal, index) => (
+          <ItemCard key={portal.id} title={`Portal ${index + 1}: ${portal.title}`} index={index} count={content.portals.items.length} onMove={(direction) => mutate((draft) => { draft.portals.items = moveItem(draft.portals.items, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.portals.items = moveItemTo(draft.portals.items, index, target); })} onDelete={() => onDelete(portal)} deleteLabel="Delete portal + category">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Connected Gallery category"><select className="form-control" value={portal.categoryId} onChange={(event) => mutate((draft) => { const category = draft.gallery.categories.find((item) => item.id === event.target.value); draft.portals.items[index].categoryId = event.target.value; if (category) draft.portals.items[index].title = category.label; })}>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+              <TextField label="Portal and Gallery name" value={portal.title} onChange={(value) => mutate((draft) => { const category = draft.gallery.categories.find((item) => item.id === draft.portals.items[index].categoryId); draft.portals.items[index].title = value; if (category) category.label = value; })} />
+              <TextField label="Feature wording" value={portal.label} onChange={(value) => mutate((draft) => { draft.portals.items[index].label = value; })} />
+              <Field label="Accent"><select className="form-control" value={portal.color} onChange={(event) => mutate((draft) => { draft.portals.items[index].color = event.target.value as GalleryPortal["color"]; })}><option value="cyan">Cyan</option><option value="gold">Gold</option><option value="rose">Rose</option></select></Field>
+              <div className="md:col-span-2"><ImageField label="Portal image" value={portal.image} position={portal.position} onChange={(image) => mutate((draft) => { draft.portals.items[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.portals.items[index].position = position; })} setStatus={setStatus} /></div>
+            </div>
+          </ItemCard>
+        ))}
+      </div>
+      {content.portals.items.length < 3 ? <AddButton label="Add replacement portal and category" onClick={onAdd} /> : null}
+    </Panel>
+  );
+}
+
+function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: EditorProps & { onDeleteCategory: (category: GalleryCategory) => void }) {
+  const [recentProjectId, setRecentProjectId] = useState<string | null>(null);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const visibleProjectEntries = useMemo(() => {
+    const search = projectSearch.trim().toLowerCase();
+    return content.gallery.projects
+      .map((project, index) => ({ project, index }))
+      .filter(({ project }) => (categoryFilter === "all" || project.categoryId === categoryFilter) && (!search || `${project.title} ${project.description}`.toLowerCase().includes(search)));
+  }, [categoryFilter, content.gallery.projects, projectSearch]);
+
+  useEffect(() => {
+    if (!recentProjectId) return;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`gallery-project-${recentProjectId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+    const timeout = window.setTimeout(() => setRecentProjectId(null), 5000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [recentProjectId, content.gallery.projects.length]);
+
+  function addProject() {
+    const firstCategory = content.gallery.categories[0];
+    if (!firstCategory) {
+      setStatus("Add a Gallery category before creating a project.");
+      return;
+    }
+    const id = createId("project");
+    mutate((draft) => {
+      const project: PortfolioProject = {
+        id,
+        title: "New project",
+        categoryId: firstCategory.id,
+        image: "/assets/gallery/wedding-waterfront.png",
+        description: "Add a short portfolio caption.",
+        visible: true,
+        cropAspect: "landscape",
+        position: { x: 50, y: 50, zoom: 1 }
+      };
+      draft.gallery.projects.push(project);
+    });
+    setRecentProjectId(id);
+    setStatus(`New Gallery project added at position ${content.gallery.projects.length + 1}. It is highlighted below.`);
+  }
+
+  return (
+    <div className="grid gap-5">
+      <Panel title="Gallery settings" copy="Category labels drive Gallery filters. Portal connections continue using their stable internal IDs.">
+        <SectionCopy content={content.gallery} onChange={(key, value) => mutate((draft) => { draft.gallery[key] = value; })} />
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {content.gallery.categories.map((category, index) => (
+            <div key={category.id} className="flex items-end gap-2 border border-white/15 bg-white/[0.035] p-3">
+              <div className="min-w-0 flex-1"><TextField label="Filter/category name" value={category.label} onChange={(value) => mutate((draft) => { draft.gallery.categories[index].label = value; const portal = draft.portals.items.find((item) => item.categoryId === category.id); if (portal) portal.title = value; })} /></div>
+              <button className="min-h-11 border border-rose/35 px-3 text-rose" type="button" onClick={() => onDeleteCategory(category)}>Delete</button>
+            </div>
+          ))}
+        </div>
+        <AddButton label="Add Gallery category" helper="New categories appear at the end of this list." onClick={() => { mutate((draft) => { draft.gallery.categories.push({ id: createId("category"), label: "New category" }); }); setStatus("New Gallery category added at the end of the list."); }} />
+      </Panel>
+      <Panel title="Gallery projects" copy="New projects appear at the bottom and are highlighted. Use the position menu to move an item directly instead of repeatedly clicking arrows.">
+        <div className="sticky top-20 z-20 mb-5 grid gap-3 border border-cyan/20 bg-night/95 p-3 shadow-glow backdrop-blur-xl md:grid-cols-[minmax(0,1fr)_240px_auto] md:items-end">
+          <Field label="Find a Gallery project"><input className="form-control" type="search" value={projectSearch} placeholder="Search by title or description..." onChange={(event) => setProjectSearch(event.target.value)} /></Field>
+          <Field label="Filter category"><select className="form-control" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">All categories</option>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+          <p className="pb-3 text-sm font-bold text-muted">Showing {visibleProjectEntries.length} of {content.gallery.projects.length}</p>
+        </div>
+        {!visibleProjectEntries.length ? <p className="mb-4 border border-white/10 bg-white/[0.03] p-4 text-muted">No Gallery projects match this search and category filter.</p> : null}
+        <div className="grid gap-4">
+          {visibleProjectEntries.map(({ project, index }) => (
+            <ItemCard key={project.id} itemId={`gallery-project-${project.id}`} highlighted={recentProjectId === project.id} title={project.title} index={index} count={content.gallery.projects.length} onMove={(direction) => mutate((draft) => { draft.gallery.projects = moveItem(draft.gallery.projects, index, direction); })} onMoveTo={(target) => { mutate((draft) => { draft.gallery.projects = moveItemTo(draft.gallery.projects, index, target); }); setStatus(`“${project.title}” moved to position ${target + 1}.`); }} onDelete={() => window.confirm(`Delete “${project.title}” from the Gallery draft?`) && mutate((draft) => { draft.gallery.projects.splice(index, 1); })}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextField label="Project / image display name" value={project.title} onChange={(value) => mutate((draft) => { draft.gallery.projects[index].title = value; })} />
+                <Field label="Category"><select className="form-control" value={project.categoryId} onChange={(event) => mutate((draft) => { draft.gallery.projects[index].categoryId = event.target.value; })}>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+                <TextArea label="Description" value={project.description} onChange={(value) => mutate((draft) => { draft.gallery.projects[index].description = value; })} />
+                <ImageField label="Project image" value={project.image} position={project.position} cropAspect={project.cropAspect || "original"} onChange={(image) => mutate((draft) => { draft.gallery.projects[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.gallery.projects[index].position = position; })} onCropAspectChange={(cropAspect) => mutate((draft) => { draft.gallery.projects[index].cropAspect = cropAspect; })} setStatus={setStatus} />
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm font-bold text-ink"><input type="checkbox" checked={project.visible} onChange={(event) => mutate((draft) => { draft.gallery.projects[index].visible = event.target.checked; })} /> Show this project on the public Gallery</label>
+            </ItemCard>
+          ))}
+        </div>
+        <AddButton label="Add Gallery project" helper="The new project will appear directly above this button." onClick={addProject} />
+      </Panel>
+    </div>
+  );
+}
+
+function PricingManager({ content, mutate, setStatus }: EditorProps) {
+  return (
+    <Panel title="Pricing packages" copy="Package cards keep the existing frontend styling and can be created, reordered, featured, edited, or removed.">
+      <SectionCopy content={content.pricing} onChange={(key, value) => mutate((draft) => { draft.pricing[key] = value; })} />
+      <div className="mt-5 grid gap-4">
+        {content.pricing.packages.map((item, index) => (
+          <ItemCard key={item.id} title={item.label} index={index} count={content.pricing.packages.length} onMove={(direction) => mutate((draft) => { draft.pricing.packages = moveItem(draft.pricing.packages, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.pricing.packages = moveItemTo(draft.pricing.packages, index, target); })} onDelete={() => content.pricing.packages.length > 1 && window.confirm(`Delete “${item.label}”?`) && mutate((draft) => { draft.pricing.packages.splice(index, 1); })}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="Package name" value={item.label} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].label = value; })} />
+              <TextField label="Displayed price" value={item.price} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].price = value; })} />
+              <TextArea label="Description" value={item.description} rows={5} maxLength={280} help={`${item.description.length}/280 characters`} onChange={(value) => mutate((draft) => { draft.pricing.packages[index].description = value; })} />
+              <FeatureListEditor features={item.features} onChange={(features) => mutate((draft) => { draft.pricing.packages[index].features = features; })} onLimit={() => setStatus("Pricing cards can contain up to 8 bullet points so the public layout stays readable.")} />
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-sm font-bold text-ink"><input type="checkbox" checked={item.featured} onChange={(event) => mutate((draft) => { if (event.target.checked) draft.pricing.packages.forEach((pack) => { pack.featured = false; }); draft.pricing.packages[index].featured = event.target.checked; })} /> Feature this package</label>
+          </ItemCard>
+        ))}
+      </div>
+      <AddButton label="Add pricing package" helper="New packages are added at the end of the list." onClick={() => { mutate((draft) => { const item: PricingPackage = { id: createId("pricing"), label: "New Package", price: "$0", description: "Describe who this package is for.", features: ["Add a feature"], featured: false }; draft.pricing.packages.push(item); }); setStatus("New pricing package added at the end of the list."); }} />
+    </Panel>
+  );
+}
+
+function StoryManager({ content, mutate, setStatus }: EditorProps) {
+  return (
+    <Panel title="Featured Story" copy="Control the story introduction and every frame in the existing interactive composition.">
+      <SectionCopy content={content.featuredStory} onChange={(key, value) => mutate((draft) => { draft.featuredStory[key] = value; })} />
+      <div className="mt-5 grid gap-4">
+        {content.featuredStory.frames.map((frame, index) => (
+          <ItemCard key={frame.id} title={frame.title} index={index} count={content.featuredStory.frames.length} onMove={(direction) => mutate((draft) => { draft.featuredStory.frames = moveItem(draft.featuredStory.frames, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.featuredStory.frames = moveItemTo(draft.featuredStory.frames, index, target); })} onDelete={() => content.featuredStory.frames.length > 1 ? mutate((draft) => { draft.featuredStory.frames.splice(index, 1); }) : setStatus("Featured Story needs at least one frame.")}>
+            <div className="grid gap-4 md:grid-cols-2"><TextField label="Chapter label" value={frame.chapter} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].chapter = value; })} /><TextField label="Selector eyebrow" value={frame.eyebrow} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].eyebrow = value; })} /><TextField label="Frame title" value={frame.title} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].title = value; })} /><TextArea label="Frame copy" value={frame.copy} onChange={(value) => mutate((draft) => { draft.featuredStory.frames[index].copy = value; })} /><div className="md:col-span-2"><ImageField label="Frame image" value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.featuredStory.frames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.featuredStory.frames[index].position = position; })} setStatus={setStatus} /></div></div>
+          </ItemCard>
+        ))}
+      </div>
+      <AddButton label="Add story frame" onClick={() => mutate((draft) => { draft.featuredStory.frames.push({ id: createId("story"), chapter: `Chapter ${String(draft.featuredStory.frames.length + 1).padStart(2, "0")}`, eyebrow: "New moment", title: "New story frame", copy: "Describe this part of the story.", image: "/assets/gallery/wedding-details.png" }); })} />
+    </Panel>
+  );
+}
+
+function EditorialManager({ content, mutate, setStatus }: EditorProps) {
+  return (
+    <Panel title="Editorial Wall" copy="Maintain the illuminated archive’s introduction and ordered image rail.">
+      <SectionCopy content={content.editorial} onChange={(key, value) => mutate((draft) => { draft.editorial[key] = value; })} />
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {content.editorial.frames.map((frame, index) => (
+          <ItemCard key={frame.id} title={frame.title} index={index} count={content.editorial.frames.length} onMove={(direction) => mutate((draft) => { draft.editorial.frames = moveItem(draft.editorial.frames, index, direction); })} onMoveTo={(target) => mutate((draft) => { draft.editorial.frames = moveItemTo(draft.editorial.frames, index, target); })} onDelete={() => content.editorial.frames.length > 1 ? mutate((draft) => { draft.editorial.frames.splice(index, 1); }) : setStatus("The Editorial Wall needs at least one frame.")}>
+            <TextField label="Frame title" value={frame.title} onChange={(value) => mutate((draft) => { draft.editorial.frames[index].title = value; })} />
+            <div className="mt-4"><ImageField label="Frame image" value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.editorial.frames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.editorial.frames[index].position = position; })} setStatus={setStatus} /></div>
+          </ItemCard>
+        ))}
+      </div>
+      <AddButton label="Add Editorial Wall frame" onClick={() => mutate((draft) => { draft.editorial.frames.push({ id: createId("editorial"), title: "New editorial frame", image: "/assets/gallery/wedding-waterfront.png" }); })} />
+    </Panel>
+  );
+}
+
+type EditorProps = { content: SiteContent; mutate: (mutator: (draft: SiteContent) => void) => void; setStatus: (status: string) => void };
+
+function Panel({ title, copy, children }: { title: string; copy: string; children: React.ReactNode }) {
+  return <section className="glass-panel p-[clamp(18px,4vw,32px)]"><div className="mb-6"><h2 className="text-[clamp(1.7rem,3vw,2.7rem)] font-black leading-none text-ink">{title}</h2><p className="mt-3 body-copy">{copy}</p></div>{children}</section>;
+}
+
+function SectionCopy<T extends { eyebrow: string; title: string; description: string }>({ content, onChange }: { content: T; onChange: (key: "eyebrow" | "title" | "description", value: string) => void }) {
+  return <div className="grid gap-4 md:grid-cols-2"><TextField label="Section eyebrow" value={content.eyebrow} onChange={(value) => onChange("eyebrow", value)} /><TextField label="Section title" value={content.title} onChange={(value) => onChange("title", value)} /><div className="md:col-span-2"><TextArea label="Section introduction" value={content.description} onChange={(value) => onChange("description", value)} /></div></div>;
+}
+
+function ItemCard({ title, index, count, onMove, onMoveTo, onDelete, deleteLabel = "Delete", itemId, highlighted = false, children }: { title: string; index: number; count: number; onMove: (direction: -1 | 1) => void; onMoveTo?: (target: number) => void; onDelete: () => void; deleteLabel?: string; itemId?: string; highlighted?: boolean; children: React.ReactNode }) {
+  return (
+    <article id={itemId} className={`scroll-mt-24 border bg-white/[0.035] p-4 transition duration-500 ${highlighted ? "border-cyan bg-cyan/10 shadow-cyan" : "border-white/15"}`}>
+      <header className="mb-4 grid gap-3 border-b border-white/10 pb-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="min-w-0">
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-cyan">Position {index + 1} of {count}{highlighted ? " · just added" : ""}</p>
+          <h3 className="mt-1 truncate text-lg font-black text-ink">{title}</h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {onMoveTo && count > 1 ? (
+            <label className="flex items-center gap-2 border border-white/15 bg-night/55 px-2.5 py-1.5 text-xs font-bold text-muted">
+              Move to
+              <select className="bg-night px-2 py-1 text-ink outline-none" value={index} aria-label={`Move ${title} to position`} onChange={(event) => onMoveTo(Number(event.target.value))}>
+                {Array.from({ length: count }, (_, position) => <option key={position} value={position}>{position + 1}</option>)}
+              </select>
+            </label>
+          ) : null}
+          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === 0} onClick={() => onMove(-1)}>Move earlier</button>
+          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === count - 1} onClick={() => onMove(1)}>Move later</button>
+          <button className="border border-rose/35 px-3 py-2 text-sm font-bold text-rose transition hover:bg-rose/10" type="button" onClick={onDelete}>{deleteLabel}</button>
+        </div>
+      </header>
+      {children}
+    </article>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="grid gap-2 text-sm font-extrabold text-ink/80">{label}{children}</label>;
+}
+
+function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <Field label={label}><input className="form-control" type="text" value={value} onChange={(event) => onChange(event.target.value)} /></Field>;
+}
+
+function TextArea({ label, value, onChange, rows = 4, maxLength, help }: { label: string; value: string; onChange: (value: string) => void; rows?: number; maxLength?: number; help?: string }) {
+  return <Field label={label}><textarea className="form-control min-h-28 resize-y" rows={rows} maxLength={maxLength} value={value} onChange={(event) => onChange(event.target.value)} />{help ? <span className="text-xs font-medium text-muted">{help}</span> : null}</Field>;
+}
+
+function FeatureListEditor({ features, onChange, onLimit }: { features: string[]; onChange: (features: string[]) => void; onLimit: () => void }) {
+  const maxFeatures = 8;
+  function updateFeature(index: number, value: string) {
+    onChange(features.map((feature, featureIndex) => featureIndex === index ? value : feature));
+  }
+  function addFeature() {
+    if (features.length >= maxFeatures) {
+      onLimit();
+      return;
+    }
+    onChange([...features, "New feature"]);
+  }
+  return (
+    <div className="grid gap-2 text-sm font-extrabold text-ink/80">
+      <div className="flex items-center justify-between gap-3">
+        <span>Package bullets</span>
+        <span className="text-xs font-medium text-muted">{features.length}/{maxFeatures}</span>
+      </div>
+      <div className="grid gap-2">
+        {features.map((feature, index) => (
+          <div key={index} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full border border-cyan/25 text-xs text-cyan">{index + 1}</span>
+            <input className="form-control min-h-11 py-2" type="text" maxLength={120} value={feature} onChange={(event) => updateFeature(index, event.target.value)} />
+            <button className="min-h-11 border border-rose/30 px-3 text-rose disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={features.length === 1} aria-label={`Remove bullet ${index + 1}`} onClick={() => onChange(features.filter((_, featureIndex) => featureIndex !== index))}>Remove</button>
+          </div>
+        ))}
+      </div>
+      <button className="w-fit border border-cyan/35 bg-cyan/10 px-3 py-2 text-sm font-black text-cyan disabled:cursor-not-allowed disabled:opacity-40" type="button" disabled={features.length >= maxFeatures} onClick={addFeature}>+ Add bullet</button>
+      <span className="text-xs font-medium text-muted">Up to 8 bullets, 120 characters each. Cards grow evenly to fit the published content.</span>
+    </div>
+  );
+}
+
+const previewAspectClasses: Record<Exclude<GalleryCropAspect, "original">, string> = {
+  landscape: "aspect-[4/3]",
+  square: "aspect-square",
+  portrait: "aspect-[3/4]"
+};
+
+function ImageField({ label, value, position, cropAspect, previewAspect = "landscape", onChange, onPositionChange, onCropAspectChange, setStatus }: { label: string; value: string; position?: ImagePosition; cropAspect?: GalleryCropAspect; previewAspect?: Exclude<GalleryCropAspect, "original">; onChange: (value: string) => void; onPositionChange?: (position: ImagePosition) => void; onCropAspectChange?: (cropAspect: GalleryCropAspect) => void; setStatus: (status: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const focalPoint = normalizeImagePosition(position);
+  const selectedAspect = cropAspect && cropAspect !== "original" ? cropAspect : previewAspect;
+  const useOriginalRatio = cropAspect === "original";
+
+  async function upload(file: File) {
+    if (file.size > 20 * 1024 * 1024) {
+      setStatus("Images must be 20 MB or smaller. Try exporting a smaller copy from Photos.");
+      return;
+    }
+
+    setUploading(true);
+    const isApplePhoto = /\.(heic|heif)$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type);
+    setStatus(isApplePhoto ? `Converting and uploading ${file.name}...` : `Uploading ${file.name}...`);
+    const formData = new FormData();
+    formData.set("file", file);
+    try {
+      const response = await adminFetch("/api/media", { method: "POST", body: formData });
+      const result = await readAdminJson<{ url?: string; converted?: boolean }>(response);
+      if (!response.ok || !result.url) {
+        throw new Error(adminErrorMessage(response, result, "Image upload failed."));
+      }
+      onChange(result.url);
+      setStatus(result.converted ? "iPhone photo converted and uploaded. Publish website changes when the section is ready." : "Image uploaded. Publish website changes when the section is ready.");
+    } catch (error) {
+      setStatus(error instanceof TypeError
+        ? connectionErrorMessage("Image upload failed.")
+        : error instanceof Error ? error.message : "Image upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function setFocalPoint(event: React.MouseEvent<HTMLButtonElement>) {
+    if (!onPositionChange) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = Math.round(((event.clientX - bounds.left) / bounds.width) * 100);
+    const y = Math.round(((event.clientY - bounds.top) / bounds.height) * 100);
+    onPositionChange({ ...focalPoint, x: clampPercentage(x), y: clampPercentage(y) });
+  }
+
+  function updateZoom(zoom: number) {
+    onPositionChange?.({ ...focalPoint, zoom: Math.max(1, Math.min(3, Number(zoom.toFixed(2)))) });
+  }
+
+  return (
+    <div className="grid gap-3 border border-white/12 bg-black/15 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-extrabold text-ink/85">{label}</p>
+          <p className="mt-1 max-w-[42ch] truncate text-xs text-muted" title={value}>{getImageName(value)}</p>
+        </div>
+        <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-cyan/35 bg-cyan/10 px-4 py-2 text-sm font-black text-cyan transition hover:border-cyan">
+          {uploading ? "Uploading..." : "Replace image"}
+          <input className="sr-only" type="file" accept="image/*,.heic,.heif" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) upload(file); event.currentTarget.value = ""; }} />
+        </label>
+      </div>
+
+      <button className={`${previewAspectClasses[selectedAspect]} relative w-full touch-manipulation overflow-hidden border border-white/10 bg-night text-left`} type="button" onClick={setFocalPoint} disabled={!onPositionChange} aria-label={`Choose the focal point for ${label}`}>
+        <img className={`h-full w-full ${useOriginalRatio ? "object-contain" : "object-cover"}`} src={value} alt="" style={getImagePresentationStyle(focalPoint)} />
+        {onPositionChange ? <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-cyan/70 shadow-[0_0_0_5px_rgba(0,0,0,0.35)]" style={{ left: `${focalPoint.x}%`, top: `${focalPoint.y}%` }} /> : null}
+        {onPositionChange ? <span className="pointer-events-none absolute bottom-2 left-2 bg-black/70 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-white">Click the subject to reposition</span> : null}
+      </button>
+
+      {onPositionChange ? (
+        <details className="border border-white/10 bg-white/[0.025] p-3">
+          <summary className="cursor-pointer text-sm font-black text-cyan">Adjust crop and framing</summary>
+          <div className="mt-4 grid gap-4">
+            {onCropAspectChange ? (
+              <Field label="Gallery card crop shape">
+                <select className="form-control" value={cropAspect || "original"} onChange={(event) => onCropAspectChange(event.target.value as GalleryCropAspect)}>
+                  <option value="original">Original image ratio</option>
+                  <option value="landscape">Landscape (4:3)</option>
+                  <option value="square">Square (1:1)</option>
+                  <option value="portrait">Portrait (3:4)</option>
+                </select>
+              </Field>
+            ) : null}
+            <Field label={`Zoom: ${Math.round(focalPoint.zoom * 100)}%`}>
+              <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-center gap-3">
+                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom <= 1} aria-label={`Zoom ${label} out`} onClick={() => updateZoom(focalPoint.zoom - 0.1)}>−</button>
+                <input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="1" max="3" step="0.05" value={focalPoint.zoom} aria-label={`Zoom ${label}`} onChange={(event) => updateZoom(Number(event.target.value))} />
+                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom >= 3} aria-label={`Zoom ${label} in`} onClick={() => updateZoom(focalPoint.zoom + 0.1)}>+</button>
+              </div>
+            </Field>
+            <Field label={`Horizontal position: ${focalPoint.x}%`}><input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.x} onChange={(event) => onPositionChange({ ...focalPoint, x: Number(event.target.value) })} /></Field>
+            <Field label={`Vertical position: ${focalPoint.y}%`}><input className="h-2 w-full cursor-ns-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.y} onChange={(event) => onPositionChange({ ...focalPoint, y: Number(event.target.value) })} /></Field>
+            <div className="flex flex-wrap gap-2">
+              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ ...focalPoint, x: 50, y: 50 })}>Center subject</button>
+              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ x: 50, y: 50, zoom: 1 })}>Reset framing</button>
+            </div>
+            <p className="text-xs font-medium text-muted">Zoom, crop shape, and focal point are saved with the website content. The original upload stays unchanged.</p>
+          </div>
+        </details>
+      ) : null}
+
+      <details className="border-t border-white/10 pt-2">
+        <summary className="cursor-pointer text-xs font-bold text-muted">Advanced image source</summary>
+        <div className="mt-3"><TextField label="Image path" value={value} onChange={onChange} /></div>
+      </details>
+    </div>
+  );
+}
+
+function AddButton({ label, onClick, helper }: { label: string; onClick: () => void; helper?: string }) {
+  return <div className="mt-5 grid w-fit gap-1"><button className="border border-cyan/35 bg-cyan/10 px-4 py-3 font-black text-cyan transition hover:border-cyan" type="button" onClick={onClick}>+ {label}</button>{helper ? <span className="text-xs text-muted">{helper}</span> : null}</div>;
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <div className="border border-white/10 bg-white/[0.03] p-3"><span className="block text-xs font-black uppercase text-muted">{label}</span><strong className="mt-1 block text-ink">{value}</strong></div>;
+}
+
+function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
+  const next = [...items];
+  const target = index + direction;
+  if (target < 0 || target >= next.length) return next;
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+function moveItemTo<T>(items: T[], index: number, target: number) {
+  if (index === target || index < 0 || target < 0 || index >= items.length || target >= items.length) return [...items];
+  const next = [...items];
+  const [item] = next.splice(index, 1);
+  next.splice(target, 0, item);
+  return next;
+}
+
+function clampPercentage(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function getImageName(value: string) {
+  if (value.startsWith("/api/media/")) return `Uploaded image · ${value.split("/").pop()}`;
+  return decodeURIComponent(value.split("/").pop() || "Current image").replace(/[-_]+/g, " ");
+}
+
+function createId(prefix: string) {
+  return createBrowserId(prefix);
+}

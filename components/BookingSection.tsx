@@ -50,10 +50,10 @@ export function BookingSection() {
     <section className="section-pad grid items-start gap-[clamp(28px,5vw,70px)] lg:grid-cols-[minmax(0,0.82fr)_minmax(320px,1fr)]" id="booking">
       <div data-scroll-anchor>
         <div className="eyebrow">Booking</div>
-        <h2 className="section-title">Start with a date, a story, and the kind of coverage needed.</h2>
+        <h2 className="section-title">Something worth remembering?</h2>
         <p className="mt-5 body-copy">Send the key details and AJC Media will follow up with availability, coverage options, and next steps.</p>
         <div className="mt-7 grid gap-2.5">
-          {["Quick availability request", "Admin booking queue", "Database and email ready"].map((item) => (
+          {["Tell us about your plans", "Find the right coverage", "Receive a personal follow-up"].map((item) => (
             <span key={item} className="border-l-2 border-cyan py-2 pl-4 text-ink/80">{item}</span>
           ))}
         </div>
@@ -96,7 +96,7 @@ export function BookingSection() {
 
 function FormLabel({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`grid gap-2 text-sm font-extrabold text-ink/80 ${className}`}>
+    <label className={`grid gap-2 text-sm font-medium text-ink/80 ${className}`}>
       {label}
       {children}
     </label>

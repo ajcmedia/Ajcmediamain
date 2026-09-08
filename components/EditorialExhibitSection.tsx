@@ -4,7 +4,6 @@ import type { CSSProperties, PointerEvent } from "react";
 import { useEffect, useRef } from "react";
 import { FramedImage } from "@/components/FramedImage";
 import { Reveal } from "@/components/Reveal";
-import { WebGLAtmosphere } from "@/components/WebGLAtmosphere";
 import type { SiteContent } from "@/types/site";
 
 export function EditorialExhibitSection({ content }: { content: SiteContent["editorial"] }) {
@@ -18,6 +17,7 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
   useEffect(() => {
     let context: { revert: () => void } | undefined;
     let isCancelled = false;
+    let media: { revert: () => void } | undefined;
 
     async function setupMotion() {
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
@@ -31,12 +31,16 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
 
       gsap.registerPlugin(ScrollTrigger);
 
+      const responsive = gsap.matchMedia();
+      media = responsive;
       context = gsap.context(() => {
+        responsive.add({ desktop: "(min-width: 900px)", mobile: "(max-width: 899px)", reduce: "(prefers-reduced-motion: reduce)" }, (matchContext) => {
         const frames = gsap.utils.toArray<HTMLElement>(".exhibit-frame");
         gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
         gsap.set(frames, { autoAlpha: 1, scale: 1, rotateZ: 0 });
 
-        if (window.matchMedia("(min-width: 900px) and (prefers-reduced-motion: no-preference)").matches) {
+        if (matchContext.conditions?.reduce) return;
+        if (matchContext.conditions?.desktop) {
           const getDistance = () => {
             if (!trackRef.current || !viewportRef.current) {
               return 0;
@@ -106,6 +110,7 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
             }
           });
         }
+        });
       }, sectionRef);
 
       ScrollTrigger.refresh();
@@ -115,6 +120,7 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
 
     return () => {
       isCancelled = true;
+      media?.revert();
       context?.revert();
     };
   }, []);
@@ -168,81 +174,14 @@ export function EditorialExhibitSection({ content }: { content: SiteContent["edi
   }
 
   return (
-    <section ref={sectionRef} id="editorial" className="editorial-section relative overflow-hidden bg-[#071019] text-ink">
-      <WebGLAtmosphere variant="editorial" className="opacity-75 mix-blend-screen" />
-      <div className="editorial-scan pointer-events-none absolute inset-0" aria-hidden="true" />
-      <div ref={viewportRef} className="editorial-viewport relative flex min-h-[100svh] flex-col justify-start overflow-hidden px-[clamp(18px,5vw,70px)] py-[clamp(58px,8vw,104px)]">
-        <p className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap text-[0.62rem] font-black uppercase tracking-[0.22em] text-white/35">Archive / scroll to explore</p>
-        <div className="pointer-events-none absolute inset-x-0 top-[11%] select-none text-center text-[clamp(4.4rem,16vw,14rem)] font-black uppercase leading-none tracking-normal text-white/[0.035]">
-          Archive 26
+    <section ref={sectionRef} id="editorial" className="editorial-section">
+      <div ref={viewportRef} className="editorial-viewport section-pad">
+        <Reveal><div className="section-heading"><div><p className="eyebrow">{content.eyebrow}</p><h2 className="section-title">{content.title}</h2></div><p className="body-copy">{content.description}</p></div></Reveal>
+        <div className="editorial-toolbar"><span className="eyebrow">Selected photographs / {String(exhibitFrames.length).padStart(2,"0")}</span><div className="editorial-rail-controls"><button type="button" aria-label="Previous editorial panel" onClick={()=>scrollRailBy(-1)}>←</button><button type="button" aria-label="Next editorial panel" onClick={()=>scrollRailBy(1)}>→</button></div></div>
+        <div ref={trackRef} className="exhibit-rail editorial-rail" onPointerDown={handleRailPointerDown} onPointerMove={handleRailPointerMove} onPointerUp={stopRailDrag} onPointerCancel={stopRailDrag} onPointerLeave={stopRailDrag}>
+          {exhibitFrames.map((frame,index)=>(<figure key={frame.id} className="exhibit-frame group" style={{"--frame-index":index} as CSSProperties}><div className="exhibit-frame-image editorial-frame"><FramedImage draggable={false} className="collection-photo" src={frame.image} alt={frame.title} position={frame.position} sizes="(max-width: 768px) 80vw, 48vw" /></div><figcaption><span>{frame.title}</span><span>{String(index+1).padStart(2,"0")}</span></figcaption></figure>))}
         </div>
-
-        <div className="relative z-10">
-        <Reveal>
-          <div className="mx-auto mt-10 max-w-3xl text-center">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan">{content.eyebrow}</p>
-            <h2 className="editorial-title mt-4 text-[clamp(2.2rem,4.1vw,4.6rem)] font-black leading-[0.94] text-ink">{content.title}</h2>
-            <p className="editorial-copy mt-5 text-bloom text-lg leading-relaxed text-ink/62">
-              {content.description.split(" ").map((word, index) => (
-                <span key={`${word}-${index}`} style={{ animationDelay: `${index * 45}ms` }}>{word} </span>
-              ))}
-            </p>
-          </div>
-        </Reveal>
-
-          <div className="editorial-rule mx-auto mt-10 h-px max-w-6xl bg-white/12">
-            <div ref={progressRef} className="h-px w-full bg-gradient-to-r from-cyan via-white to-gold shadow-[0_0_18px_rgba(61,229,255,0.6)]" />
-          </div>
-
-          <div className="mt-4 text-center text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/38">
-            <span className="editorial-scroll-hint">Vertical scroll drives the horizontal light table / </span><span className="editorial-touch-hint">Drag or swipe frames</span>
-          </div>
-
-          <div className="editorial-rail-controls mt-4 flex items-center justify-center gap-3">
-            <button
-              className="grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/5 text-xl font-black text-ink shadow-glow backdrop-blur-md"
-              type="button"
-              aria-label="Previous editorial panel"
-              onClick={() => scrollRailBy(-1)}
-            >
-              ‹
-            </button>
-            <button
-              className="grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/5 text-xl font-black text-ink shadow-glow backdrop-blur-md"
-              type="button"
-              aria-label="Next editorial panel"
-              onClick={() => scrollRailBy(1)}
-            >
-              ›
-            </button>
-          </div>
-
-          <div
-            ref={trackRef}
-            className="exhibit-rail editorial-rail mt-6 flex snap-x gap-3 overflow-x-auto pb-6 sm:gap-5"
-            onPointerDown={handleRailPointerDown}
-            onPointerMove={handleRailPointerMove}
-            onPointerUp={stopRailDrag}
-            onPointerCancel={stopRailDrag}
-            onPointerLeave={stopRailDrag}
-          >
-            {exhibitFrames.map((frame, index) => (
-              <figure key={frame.id} className="exhibit-frame group shrink-0 snap-center" style={{ "--frame-index": index } as CSSProperties}>
-                <div className="exhibit-frame-image editorial-frame relative aspect-[4/3] overflow-hidden border border-white/15 bg-night shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
-                  <FramedImage draggable={false} className="transition duration-700 group-hover:scale-[1.025]" src={frame.image} alt={frame.title} position={frame.position} sizes="(max-width: 768px) 78vw, 52vw" />
-                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/62 via-transparent to-black/15" />
-                  <div className="film-perforations pointer-events-none absolute inset-x-3 top-2 z-20 h-1.5 opacity-55" aria-hidden="true" />
-                  <span className="absolute left-4 top-4 z-20 border border-white/20 bg-black/55 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-cyan backdrop-blur-md">Frame {String(index + 1).padStart(2, "0")}</span>
-                  <span className="absolute bottom-4 right-4 z-20 text-[0.58rem] font-black uppercase tracking-[0.2em] text-white/55">AJC / 2026</span>
-                </div>
-                <figcaption className="mt-3 flex items-center justify-between gap-4 border-t border-white/15 pt-3 text-sm font-black uppercase tracking-[0.12em] text-white/65">
-                  <span>{frame.title}</span>
-                  <span className="text-gold">Selected</span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
+        <div className="editorial-rule"><div ref={progressRef} /></div>
       </div>
     </section>
   );

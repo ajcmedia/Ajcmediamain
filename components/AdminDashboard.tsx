@@ -373,29 +373,29 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
         : "Checking session";
 
   return (
-    <main className="min-h-screen pb-20 pt-24">
+    <main className="studio-admin min-h-screen pb-20 pt-24">
       <header className="px-[clamp(18px,5vw,70px)] pb-8">
-        <div className="flex flex-col gap-5 border-b border-white/15 pb-7 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-5 border-b border-ink/15 pb-7 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="eyebrow">AJC Media control room</p>
-            <h1 className="max-w-[15ch] text-[clamp(2.2rem,5vw,4.8rem)] font-black leading-[0.94] text-ink">Manage the website without touching the layout.</h1>
+            <h1 className="max-w-[15ch] text-[clamp(2.2rem,5vw,4.8rem)] font-medium leading-[0.94] text-ink">Your studio, in one place.</h1>
           </div>
           <div className="flex flex-wrap gap-3">
-            <span className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-black ${sessionState === "active" ? "border-green/35 bg-green/10 text-green" : sessionState === "expired" ? "border-rose/40 bg-rose/10 text-rose" : "border-gold/35 bg-gold/10 text-gold"}`} role="status">
+            <span className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium ${sessionState === "active" ? "border-green/35 bg-green/10 text-green" : sessionState === "expired" ? "border-rose/40 bg-rose/10 text-rose" : "border-gold/35 bg-gold/10 text-gold"}`} role="status">
               {sessionLabel}
             </span>
             <a className="pill-button pill-button-ghost" href="/" target="_blank" rel="noreferrer">Preview website</a>
-            <button className="pill-button border-white/15 text-muted" type="button" onClick={signOut}>Sign out</button>
+            <button className="pill-button border-ink/15 text-muted" type="button" onClick={signOut}>Sign out</button>
           </div>
         </div>
         <p className={`mt-4 min-h-6 ${statusIsError || status.toLowerCase().includes("before deleting") ? "text-rose" : "text-green"}`} role="status">{status}</p>
         {authRequired ? (
           <form className="mt-4 grid gap-3 border border-rose/45 bg-rose/10 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.5fr)_auto] lg:items-end" onSubmit={reauthenticate}>
             <div>
-              <strong className="block text-base font-black text-rose">Restore the admin session without losing this draft</strong>
+              <strong className="block text-base font-medium text-rose">Restore the admin session without losing this draft</strong>
               <p className="mt-1 text-sm text-ink/72">{reauthStatus || "Safari may discard an expired session after the device has been locked or the tab has been in the background."}</p>
             </div>
-            <label className="grid gap-1 text-sm font-extrabold text-ink/80">
+            <label className="grid gap-1 text-sm font-medium text-ink/80">
               Admin password
               <input
                 className="form-control min-h-11 py-2"
@@ -419,8 +419,8 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
         <aside className="glass-panel h-fit p-3 xl:sticky xl:top-24">
           <nav className="grid gap-1" aria-label="Admin sections">
             {tabs.map((tab) => (
-              <button key={tab.id} className={`border px-4 py-3 text-left transition ${activeTab === tab.id ? "border-cyan/45 bg-cyan/10 text-ink" : "border-transparent text-ink/72 hover:border-white/15 hover:bg-white/[0.04]"}`} type="button" onClick={() => setActiveTab(tab.id)}>
-                <span className="block font-black">{tab.label}{tab.id === "requests" && newBookingCount ? ` (${newBookingCount})` : ""}</span>
+              <button key={tab.id} className={`border px-4 py-3 text-left transition ${activeTab === tab.id ? "border-cyan/45 bg-cyan/10 text-ink" : "border-transparent text-ink/72 hover:border-ink/15 hover:bg-white/[0.04]"}`} type="button" onClick={() => setActiveTab(tab.id)}>
+                <span className="block font-medium">{tab.label}{tab.id === "requests" && newBookingCount ? ` (${newBookingCount})` : ""}</span>
                 <span className="mt-1 block text-xs text-muted">{tab.description}</span>
               </button>
             ))}
@@ -445,7 +445,7 @@ export function AdminDashboard({ initialContent }: { initialContent: SiteContent
                 aria-live="polite"
                 data-publish-status={publishNotice?.tone || (hasUnpublishedChanges ? "draft" : "idle")}
               >
-                <strong className={`block text-sm font-black ${publishNotice?.tone === "success" ? "text-green" : publishNotice?.tone === "error" ? "text-rose" : hasUnpublishedChanges ? "text-gold" : "text-cyan"}`}>
+                <strong className={`block text-sm font-medium ${publishNotice?.tone === "success" ? "text-green" : publishNotice?.tone === "error" ? "text-rose" : hasUnpublishedChanges ? "text-gold" : "text-cyan"}`}>
                   {publishNotice?.tone === "success" ? "Changes published" : publishNotice?.tone === "error" ? "Could not publish" : hasUnpublishedChanges ? "Unpublished changes" : "Website is up to date"}
                 </strong>
                 <p className="mt-1 text-sm text-muted">
@@ -472,7 +472,7 @@ function Overview({ content, bookings, databaseConfigured, isLoadingBookings, on
   ];
   return (
     <section className="grid gap-5">
-      <Panel title="Dashboard overview" copy="Everything here controls existing content slots; the public design and interactions remain unchanged.">
+      <Panel title="Dashboard overview" copy="Manage photographs, collections, pricing, and inquiries. Preview your edits, then publish when you are ready.">
         <div className={`border p-4 ${databaseConfigured ? "border-green/35 bg-green/5 text-green" : "border-gold/35 bg-gold/5 text-gold"}`}>
           {databaseConfigured ? "MongoDB is configured. Content, uploads, and requests are persistent." : "MongoDB is not configured yet. The public site is safely using its built-in content; publishing and uploads will activate after the environment variables are added."}
         </div>
@@ -480,7 +480,7 @@ function Overview({ content, bookings, databaseConfigured, isLoadingBookings, on
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <button key={card.label} className="glass-panel p-5 text-left transition hover:border-cyan/45" type="button" onClick={() => onOpen(card.tab)}>
-            <strong className="block text-4xl font-black text-ink">{isLoadingBookings && card.tab === "requests" ? "—" : card.value}</strong>
+            <strong className="block text-4xl font-medium text-ink">{isLoadingBookings && card.tab === "requests" ? "—" : card.value}</strong>
             <span className="mt-2 block text-sm uppercase text-muted">{card.label}</span>
           </button>
         ))}
@@ -488,8 +488,8 @@ function Overview({ content, bookings, databaseConfigured, isLoadingBookings, on
       <Panel title="Connected content model" copy="Portal links use stable category IDs. Renaming a category never breaks its portal, filter, or assigned photographs.">
         <div className="grid gap-3 md:grid-cols-3">
           {content.portals.items.map((portal) => (
-            <div key={portal.id} className="border border-white/15 bg-white/[0.04] p-4">
-              <p className="font-black text-ink">{portal.title}</p>
+            <div key={portal.id} className="border border-ink/15 bg-white/[0.04] p-4">
+              <p className="font-medium text-ink">{portal.title}</p>
               <p className="mt-1 text-sm text-muted">Gallery filter: {content.gallery.categories.find((category) => category.id === portal.categoryId)?.label}</p>
             </div>
           ))}
@@ -509,21 +509,21 @@ function BookingManager({ bookings, onChange, onSave, onDelete, isLoading }: { b
     <Panel title="Booking requests" copy="Every public form submission is saved here and also emailed when SMTP is configured.">
       <div className="mb-5 flex flex-wrap gap-2">
         {[{ value: "all", label: "All" }, ...bookingStatuses].map((option) => (
-          <button key={option.value} className={`rounded-full border px-3 py-2 text-sm ${filter === option.value ? "border-cyan/45 bg-cyan/10 text-ink" : "border-white/15 text-muted"}`} type="button" onClick={() => setFilter(option.value as BookingStatus | "all")}>{option.label}</button>
+          <button key={option.value} className={`rounded-full border px-3 py-2 text-sm ${filter === option.value ? "border-cyan/45 bg-cyan/10 text-ink" : "border-ink/15 text-muted"}`} type="button" onClick={() => setFilter(option.value as BookingStatus | "all")}>{option.label}</button>
         ))}
       </div>
       {isLoading ? <p className="body-copy">Loading booking requests...</p> : null}
       {!isLoading && !visible.length ? <p className="body-copy">No booking requests in this view.</p> : null}
       <div className="grid gap-4">
         {visible.map((booking) => (
-          <article key={booking.id} className="border border-white/15 bg-white/[0.035] p-5">
+          <article key={booking.id} className="border border-ink/15 bg-white/[0.035] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan">{new Date(booking.createdAt).toLocaleString()}</p>
-                <h3 className="mt-2 text-2xl font-black text-ink">{booking.name}</h3>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-cyan">{new Date(booking.createdAt).toLocaleString()}</p>
+                <h3 className="mt-2 text-2xl font-medium text-ink">{booking.name}</h3>
                 <p className="mt-1 text-muted"><a className="text-cyan" href={`mailto:${booking.email}`}>{booking.email}</a>{booking.phone ? ` · ${booking.phone}` : ""}</p>
               </div>
-              <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black uppercase ${booking.emailSent ? "border-green/35 text-green" : "border-gold/35 text-gold"}`}>{booking.emailSent ? "Email sent" : "Email pending"}</span>
+              <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-medium uppercase ${booking.emailSent ? "border-green/35 text-green" : "border-gold/35 text-gold"}`}>{booking.emailSent ? "Email sent" : "Email pending"}</span>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Detail label="Shoot type" value={booking.type} />
@@ -550,19 +550,19 @@ function BookingManager({ bookings, onChange, onSave, onDelete, isLoading }: { b
 function SiteImageManager({ content, mutate, setStatus }: EditorProps) {
   return (
     <div className="grid gap-5">
-      <Panel title="Hero images" copy="Replace each image, give it a useful description, and set the focal point used by the public composition.">
-        <ImageField label="Hero background" value={content.hero.backgroundImage} position={content.hero.backgroundPosition} onChange={(image) => mutate((draft) => { draft.hero.backgroundImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.backgroundPosition = position; })} setStatus={setStatus} />
+      <Panel title="Hero images" copy="The lead photograph fills the opening screen. All highlights and detail photographs appear in the horizontal filmstrip and can be selected for the opening image. The first two highlights also frame the About section. Focal points and zoom control each crop.">
+        <ImageField label="Homepage lead photograph" value={content.hero.backgroundImage} position={content.hero.backgroundPosition} onChange={(image) => mutate((draft) => { draft.hero.backgroundImage = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.backgroundPosition = position; })} setStatus={setStatus} />
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {content.hero.showcaseFrames.map((frame, index) => (
-            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
-              <TextField label={`Showcase ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.showcaseFrames[index].alt = value; })} />
-              <ImageField label={`Showcase frame ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.showcaseFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.showcaseFrames[index].position = position; })} setStatus={setStatus} />
+            <div key={frame.id} className="grid gap-3 border border-ink/15 bg-white/[0.03] p-3">
+              <TextField label={`Portfolio highlight ${index + 1} description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.showcaseFrames[index].alt = value; })} />
+              <ImageField label={`Portfolio highlight ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.showcaseFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.showcaseFrames[index].position = position; })} setStatus={setStatus} />
             </div>
           ))}
           {content.hero.thumbnailFrames.map((frame, index) => (
-            <div key={frame.id} className="grid gap-3 border border-white/15 bg-white/[0.03] p-3">
+            <div key={frame.id} className="grid gap-3 border border-ink/15 bg-white/[0.03] p-3">
               <TextField label={`Thumbnail ${index + 1} name / description`} value={frame.alt} onChange={(value) => mutate((draft) => { draft.hero.thumbnailFrames[index].alt = value; })} />
-              <ImageField label={`Strip thumbnail ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.thumbnailFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.thumbnailFrames[index].position = position; })} setStatus={setStatus} />
+              <ImageField label={`Detail thumbnail ${index + 1}`} value={frame.image} position={frame.position} onChange={(image) => mutate((draft) => { draft.hero.thumbnailFrames[index].image = image; })} onPositionChange={(position) => mutate((draft) => { draft.hero.thumbnailFrames[index].position = position; })} setStatus={setStatus} />
             </div>
           ))}
         </div>
@@ -678,7 +678,7 @@ function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: Editor
         <SectionCopy content={content.gallery} onChange={(key, value) => mutate((draft) => { draft.gallery[key] = value; })} />
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {content.gallery.categories.map((category, index) => (
-            <div key={category.id} className="flex items-end gap-2 border border-white/15 bg-white/[0.035] p-3">
+            <div key={category.id} className="flex items-end gap-2 border border-ink/15 bg-white/[0.035] p-3">
               <div className="min-w-0 flex-1"><TextField label="Filter/category name" value={category.label} onChange={(value) => mutate((draft) => { draft.gallery.categories[index].label = value; const portal = draft.portals.items.find((item) => item.categoryId === category.id); if (portal) portal.title = value; })} /></div>
               <button className="min-h-11 border border-rose/35 px-3 text-rose" type="button" onClick={() => onDeleteCategory(category)}>Delete</button>
             </div>
@@ -692,7 +692,7 @@ function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: Editor
           <Field label="Filter category"><select className="form-control" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">All categories</option>{content.gallery.categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
           <p className="pb-3 text-sm font-bold text-muted">Showing {visibleProjectEntries.length} of {content.gallery.projects.length}</p>
         </div>
-        {!visibleProjectEntries.length ? <p className="mb-4 border border-white/10 bg-white/[0.03] p-4 text-muted">No Gallery projects match this search and category filter.</p> : null}
+        {!visibleProjectEntries.length ? <p className="mb-4 border border-ink/10 bg-white/[0.03] p-4 text-muted">No Gallery projects match this search and category filter.</p> : null}
         <div className="grid gap-4">
           {visibleProjectEntries.map(({ project, index }) => (
             <ItemCard key={project.id} itemId={`gallery-project-${project.id}`} highlighted={recentProjectId === project.id} title={project.title} index={index} count={content.gallery.projects.length} onMove={(direction) => mutate((draft) => { draft.gallery.projects = moveItem(draft.gallery.projects, index, direction); })} onMoveTo={(target) => { mutate((draft) => { draft.gallery.projects = moveItemTo(draft.gallery.projects, index, target); }); setStatus(`“${project.title}” moved to position ${target + 1}.`); }} onDelete={() => window.confirm(`Delete “${project.title}” from the Gallery draft?`) && mutate((draft) => { draft.gallery.projects.splice(index, 1); })}>
@@ -714,7 +714,7 @@ function GalleryManager({ content, mutate, onDeleteCategory, setStatus }: Editor
 
 function PricingManager({ content, mutate, setStatus }: EditorProps) {
   return (
-    <Panel title="Pricing packages" copy="Package cards keep the existing frontend styling and can be created, reordered, featured, edited, or removed.">
+    <Panel title="Pricing packages" copy="Create, reorder, feature, edit, or remove packages. Every package uses the same light layout on the public site.">
       <SectionCopy content={content.pricing} onChange={(key, value) => mutate((draft) => { draft.pricing[key] = value; })} />
       <div className="mt-5 grid gap-4">
         {content.pricing.packages.map((item, index) => (
@@ -770,7 +770,7 @@ function EditorialManager({ content, mutate, setStatus }: EditorProps) {
 type EditorProps = { content: SiteContent; mutate: (mutator: (draft: SiteContent) => void) => void; setStatus: (status: string) => void };
 
 function Panel({ title, copy, children }: { title: string; copy: string; children: React.ReactNode }) {
-  return <section className="glass-panel p-[clamp(18px,4vw,32px)]"><div className="mb-6"><h2 className="text-[clamp(1.7rem,3vw,2.7rem)] font-black leading-none text-ink">{title}</h2><p className="mt-3 body-copy">{copy}</p></div>{children}</section>;
+  return <section className="glass-panel p-[clamp(18px,4vw,32px)]"><div className="mb-6"><h2 className="text-[clamp(1.7rem,3vw,2.7rem)] font-medium leading-none text-ink">{title}</h2><p className="mt-3 body-copy">{copy}</p></div>{children}</section>;
 }
 
 function SectionCopy<T extends { eyebrow: string; title: string; description: string }>({ content, onChange }: { content: T; onChange: (key: "eyebrow" | "title" | "description", value: string) => void }) {
@@ -779,23 +779,23 @@ function SectionCopy<T extends { eyebrow: string; title: string; description: st
 
 function ItemCard({ title, index, count, onMove, onMoveTo, onDelete, deleteLabel = "Delete", itemId, highlighted = false, children }: { title: string; index: number; count: number; onMove: (direction: -1 | 1) => void; onMoveTo?: (target: number) => void; onDelete: () => void; deleteLabel?: string; itemId?: string; highlighted?: boolean; children: React.ReactNode }) {
   return (
-    <article id={itemId} className={`scroll-mt-24 border bg-white/[0.035] p-4 transition duration-500 ${highlighted ? "border-cyan bg-cyan/10 shadow-cyan" : "border-white/15"}`}>
-      <header className="mb-4 grid gap-3 border-b border-white/10 pb-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <article id={itemId} className={`scroll-mt-24 border bg-white/[0.035] p-4 transition duration-500 ${highlighted ? "border-cyan bg-cyan/10 shadow-cyan" : "border-ink/15"}`}>
+      <header className="mb-4 grid gap-3 border-b border-ink/10 pb-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div className="min-w-0">
-          <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-cyan">Position {index + 1} of {count}{highlighted ? " · just added" : ""}</p>
-          <h3 className="mt-1 truncate text-lg font-black text-ink">{title}</h3>
+          <p className="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-cyan">Position {index + 1} of {count}{highlighted ? " · just added" : ""}</p>
+          <h3 className="mt-1 truncate text-lg font-medium text-ink">{title}</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {onMoveTo && count > 1 ? (
-            <label className="flex items-center gap-2 border border-white/15 bg-night/55 px-2.5 py-1.5 text-xs font-bold text-muted">
+            <label className="flex items-center gap-2 border border-ink/15 bg-night/55 px-2.5 py-1.5 text-xs font-bold text-muted">
               Move to
               <select className="bg-night px-2 py-1 text-ink outline-none" value={index} aria-label={`Move ${title} to position`} onChange={(event) => onMoveTo(Number(event.target.value))}>
                 {Array.from({ length: count }, (_, position) => <option key={position} value={position}>{position + 1}</option>)}
               </select>
             </label>
           ) : null}
-          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === 0} onClick={() => onMove(-1)}>Move earlier</button>
-          <button className="border border-white/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === count - 1} onClick={() => onMove(1)}>Move later</button>
+          <button className="border border-ink/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === 0} onClick={() => onMove(-1)}>Move earlier</button>
+          <button className="border border-ink/15 px-3 py-2 text-sm font-bold text-muted transition hover:border-cyan/45 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled={index === count - 1} onClick={() => onMove(1)}>Move later</button>
           <button className="border border-rose/35 px-3 py-2 text-sm font-bold text-rose transition hover:bg-rose/10" type="button" onClick={onDelete}>{deleteLabel}</button>
         </div>
       </header>
@@ -805,7 +805,7 @@ function ItemCard({ title, index, count, onMove, onMoveTo, onDelete, deleteLabel
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="grid gap-2 text-sm font-extrabold text-ink/80">{label}{children}</label>;
+  return <label className="grid gap-2 text-sm font-medium text-ink/80">{label}{children}</label>;
 }
 
 function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
@@ -829,7 +829,7 @@ function FeatureListEditor({ features, onChange, onLimit }: { features: string[]
     onChange([...features, "New feature"]);
   }
   return (
-    <div className="grid gap-2 text-sm font-extrabold text-ink/80">
+    <div className="grid gap-2 text-sm font-medium text-ink/80">
       <div className="flex items-center justify-between gap-3">
         <span>Package bullets</span>
         <span className="text-xs font-medium text-muted">{features.length}/{maxFeatures}</span>
@@ -843,7 +843,7 @@ function FeatureListEditor({ features, onChange, onLimit }: { features: string[]
           </div>
         ))}
       </div>
-      <button className="w-fit border border-cyan/35 bg-cyan/10 px-3 py-2 text-sm font-black text-cyan disabled:cursor-not-allowed disabled:opacity-40" type="button" disabled={features.length >= maxFeatures} onClick={addFeature}>+ Add bullet</button>
+      <button className="w-fit border border-cyan/35 bg-cyan/10 px-3 py-2 text-sm font-medium text-cyan disabled:cursor-not-allowed disabled:opacity-40" type="button" disabled={features.length >= maxFeatures} onClick={addFeature}>+ Add bullet</button>
       <span className="text-xs font-medium text-muted">Up to 8 bullets, 120 characters each. Cards grow evenly to fit the published content.</span>
     </div>
   );
@@ -902,27 +902,27 @@ function ImageField({ label, value, position, cropAspect, previewAspect = "lands
   }
 
   return (
-    <div className="grid gap-3 border border-white/12 bg-black/15 p-3">
+    <div className="grid gap-3 border border-ink/12 bg-black/15 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-extrabold text-ink/85">{label}</p>
+          <p className="text-sm font-medium text-ink/85">{label}</p>
           <p className="mt-1 max-w-[42ch] truncate text-xs text-muted" title={value}>{getImageName(value)}</p>
         </div>
-        <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-cyan/35 bg-cyan/10 px-4 py-2 text-sm font-black text-cyan transition hover:border-cyan">
+        <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-cyan/35 bg-cyan/10 px-4 py-2 text-sm font-medium text-cyan transition hover:border-cyan">
           {uploading ? "Uploading..." : "Replace image"}
           <input className="sr-only" type="file" accept="image/*,.heic,.heif" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) upload(file); event.currentTarget.value = ""; }} />
         </label>
       </div>
 
-      <button className={`${previewAspectClasses[selectedAspect]} relative w-full touch-manipulation overflow-hidden border border-white/10 bg-night text-left`} type="button" onClick={setFocalPoint} disabled={!onPositionChange} aria-label={`Choose the focal point for ${label}`}>
+      <button className={`${previewAspectClasses[selectedAspect]} relative w-full touch-manipulation overflow-hidden border border-ink/10 bg-night text-left`} type="button" onClick={setFocalPoint} disabled={!onPositionChange} aria-label={`Choose the focal point for ${label}`}>
         <img className={`h-full w-full ${useOriginalRatio ? "object-contain" : "object-cover"}`} src={value} alt="" style={getImagePresentationStyle(focalPoint)} />
         {onPositionChange ? <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-cyan/70 shadow-[0_0_0_5px_rgba(0,0,0,0.35)]" style={{ left: `${focalPoint.x}%`, top: `${focalPoint.y}%` }} /> : null}
-        {onPositionChange ? <span className="pointer-events-none absolute bottom-2 left-2 bg-black/70 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-white">Click the subject to reposition</span> : null}
+        {onPositionChange ? <span className="pointer-events-none absolute bottom-2 left-2 bg-white/95 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-ink">Click the subject to reposition</span> : null}
       </button>
 
       {onPositionChange ? (
-        <details className="border border-white/10 bg-white/[0.025] p-3">
-          <summary className="cursor-pointer text-sm font-black text-cyan">Adjust crop and framing</summary>
+        <details className="border border-ink/10 bg-white/[0.025] p-3">
+          <summary className="cursor-pointer text-sm font-medium text-cyan">Adjust crop and framing</summary>
           <div className="mt-4 grid gap-4">
             {onCropAspectChange ? (
               <Field label="Gallery card crop shape">
@@ -936,23 +936,23 @@ function ImageField({ label, value, position, cropAspect, previewAspect = "lands
             ) : null}
             <Field label={`Zoom: ${Math.round(focalPoint.zoom * 100)}%`}>
               <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-center gap-3">
-                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom <= 1} aria-label={`Zoom ${label} out`} onClick={() => updateZoom(focalPoint.zoom - 0.1)}>−</button>
+                <button className="min-h-11 border border-ink/15 text-xl font-medium text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom <= 1} aria-label={`Zoom ${label} out`} onClick={() => updateZoom(focalPoint.zoom - 0.1)}>−</button>
                 <input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="1" max="3" step="0.05" value={focalPoint.zoom} aria-label={`Zoom ${label}`} onChange={(event) => updateZoom(Number(event.target.value))} />
-                <button className="min-h-11 border border-white/15 text-xl font-black text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom >= 3} aria-label={`Zoom ${label} in`} onClick={() => updateZoom(focalPoint.zoom + 0.1)}>+</button>
+                <button className="min-h-11 border border-ink/15 text-xl font-medium text-ink disabled:opacity-35" type="button" disabled={focalPoint.zoom >= 3} aria-label={`Zoom ${label} in`} onClick={() => updateZoom(focalPoint.zoom + 0.1)}>+</button>
               </div>
             </Field>
             <Field label={`Horizontal position: ${focalPoint.x}%`}><input className="h-2 w-full cursor-ew-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.x} onChange={(event) => onPositionChange({ ...focalPoint, x: Number(event.target.value) })} /></Field>
             <Field label={`Vertical position: ${focalPoint.y}%`}><input className="h-2 w-full cursor-ns-resize accent-cyan" type="range" min="0" max="100" value={focalPoint.y} onChange={(event) => onPositionChange({ ...focalPoint, y: Number(event.target.value) })} /></Field>
             <div className="flex flex-wrap gap-2">
-              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ ...focalPoint, x: 50, y: 50 })}>Center subject</button>
-              <button className="w-fit border border-white/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ x: 50, y: 50, zoom: 1 })}>Reset framing</button>
+              <button className="w-fit border border-ink/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ ...focalPoint, x: 50, y: 50 })}>Center subject</button>
+              <button className="w-fit border border-ink/15 px-3 py-2 text-sm font-bold text-muted" type="button" onClick={() => onPositionChange({ x: 50, y: 50, zoom: 1 })}>Reset framing</button>
             </div>
             <p className="text-xs font-medium text-muted">Zoom, crop shape, and focal point are saved with the website content. The original upload stays unchanged.</p>
           </div>
         </details>
       ) : null}
 
-      <details className="border-t border-white/10 pt-2">
+      <details className="border-t border-ink/10 pt-2">
         <summary className="cursor-pointer text-xs font-bold text-muted">Advanced image source</summary>
         <div className="mt-3"><TextField label="Image path" value={value} onChange={onChange} /></div>
       </details>
@@ -961,11 +961,11 @@ function ImageField({ label, value, position, cropAspect, previewAspect = "lands
 }
 
 function AddButton({ label, onClick, helper }: { label: string; onClick: () => void; helper?: string }) {
-  return <div className="mt-5 grid w-fit gap-1"><button className="border border-cyan/35 bg-cyan/10 px-4 py-3 font-black text-cyan transition hover:border-cyan" type="button" onClick={onClick}>+ {label}</button>{helper ? <span className="text-xs text-muted">{helper}</span> : null}</div>;
+  return <div className="mt-5 grid w-fit gap-1"><button className="border border-cyan/35 bg-cyan/10 px-4 py-3 font-medium text-cyan transition hover:border-cyan" type="button" onClick={onClick}>+ {label}</button>{helper ? <span className="text-xs text-muted">{helper}</span> : null}</div>;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
-  return <div className="border border-white/10 bg-white/[0.03] p-3"><span className="block text-xs font-black uppercase text-muted">{label}</span><strong className="mt-1 block text-ink">{value}</strong></div>;
+  return <div className="border border-ink/10 bg-white/[0.03] p-3"><span className="block text-xs font-medium uppercase text-muted">{label}</span><strong className="mt-1 block text-ink">{value}</strong></div>;
 }
 
 function moveItem<T>(items: T[], index: number, direction: -1 | 1) {

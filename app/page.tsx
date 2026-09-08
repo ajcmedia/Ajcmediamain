@@ -20,11 +20,11 @@ export default async function HomePage() {
   const content = await getSiteContent();
 
   return (
-    <PageShell>
+    <PageShell light>
       <main>
         <HeroSection content={content.hero} />
         <IntroStrip />
-        <AboutSection content={content.about} />
+        <AboutSection content={content.about} photographs={content.hero.showcaseFrames} />
         <CinematicExperienceSection content={content.experience} />
         <ExhibitPortalSection content={content.portals} />
         <ServicesSection content={content.services} />

@@ -10,13 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#f8fbff",
-        muted: "#a8b4c6",
-        cyan: "#3de5ff",
-        gold: "#ffbd73",
-        rose: "#ff5c9c",
-        green: "#95f2be",
-        night: "#05070b"
+        ink: "rgb(var(--ink, 38 36 31) / <alpha-value>)",
+        muted: "rgb(var(--muted, 113 107 97) / <alpha-value>)",
+        cyan: "rgb(var(--accent, 81 76 66) / <alpha-value>)",
+        gold: "rgb(var(--gold, 132 97 59) / <alpha-value>)",
+        rose: "#a23d58",
+        green: "#26744d",
+        night: "rgb(var(--surface, 250 249 246) / <alpha-value>)"
       },
       boxShadow: {
         glow: "0 24px 70px rgba(0, 0, 0, 0.38)",
