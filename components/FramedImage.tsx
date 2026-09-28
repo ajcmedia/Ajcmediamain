@@ -32,6 +32,8 @@ type FramedImageProps = {
   draggable?: boolean;
   fit?: "auto" | "cover" | "contain";
   position?: ImagePosition;
+  onLoad?: () => void;
+  onError?: () => void;
 };
 
 export function FramedImage({
@@ -42,7 +44,9 @@ export function FramedImage({
   priority = false,
   draggable,
   fit = "auto",
-  position
+  position,
+  onLoad,
+  onError
 }: FramedImageProps) {
   const showFullImage = fit === "contain" || (fit === "auto" && !position && portraitImages.has(src));
   const objectPosition = getObjectPosition(position, focalPoints[src] ?? "50% 50%");
@@ -73,6 +77,8 @@ export function FramedImage({
           priority={priority}
           draggable={draggable}
           style={{ objectPosition }}
+          onLoad={onLoad}
+          onError={onError}
         />
       </span>
     </>

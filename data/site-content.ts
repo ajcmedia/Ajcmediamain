@@ -34,7 +34,7 @@ export const defaultSiteContent: SiteContent = {
   experience: {
     eyebrow: "Experience Reel",
     title: "Feel the day before you book it.",
-    description: "A four-scene cut from quiet detail to final delivery. Scroll at your own pace; every beat has room to land.",
+    description: "A four-scene journey from quiet anticipation to the moments that make the celebration unforgettable.",
     scenes: [
       { id: "experience-1", label: "Scene 01", title: "The anticipation", copy: "Soft details, quiet nerves, and the first frames that set the emotional tone.", image: "/assets/gallery/wedding-details.png" },
       { id: "experience-2", label: "Scene 02", title: "The moment opens", copy: "Movement, reactions, and the real atmosphere of the day captured without feeling staged.", image: "/assets/gallery/wedding-waterfront.png" },
@@ -45,7 +45,7 @@ export const defaultSiteContent: SiteContent = {
   portals: {
     eyebrow: "Gallery Portals",
     title: "Choose a story. Step through the frame.",
-    description: "Each portal opens the same gallery from a different emotional doorway—celebration, connection, or character.",
+    description: "Enter through celebration, connection, or character, and discover photographs shaped by each kind of story.",
     items: [
       { id: "portal-wedding", categoryId: "category-wedding", title: "Wedding", label: "Vows, dance floors, details", image: "/assets/gallery/wedding-waterfront.png", color: "cyan" },
       { id: "portal-event", categoryId: "category-event", title: "Events", label: "Birthdays, baptisms, showers", image: "/assets/gallery/birthday-candles.png", color: "gold" },
@@ -61,9 +61,9 @@ export const defaultSiteContent: SiteContent = {
     ]
   },
   featuredStory: {
-    eyebrow: "Featured Story / Interactive cut",
+    eyebrow: "Featured Wedding Story",
     title: "One wedding day, told like a cinematic magazine spread.",
-    description: "Choose a frame—or tap the main image to move forward—and watch the editorial spread recompose around that moment.",
+    description: "From the smallest details to the energy of the reception, every chapter holds its own piece of the day.",
     frames: [
       { id: "story-1", chapter: "Chapter 01 / Details", eyebrow: "The quiet setup", title: "Details before the aisle.", copy: "Rings, florals, fabric, and the small decisions that establish the visual language of the day.", image: "/assets/gallery/wedding-details.png" },
       { id: "story-2", chapter: "Chapter 02 / Portraits", eyebrow: "A sense of place", title: "Portraits with room to breathe.", copy: "A waterfront pause that keeps the couple, the light, and the city connected in one complete frame.", image: "/assets/gallery/wedding-waterfront.png" },
@@ -87,7 +87,7 @@ export const defaultSiteContent: SiteContent = {
   editorial: {
     eyebrow: "Editorial Wall",
     title: "A few moments to linger on.",
-    description: "A curated photo wall gives visitors the feeling of stepping inside a private exhibit before they open the full gallery.",
+    description: "A quiet collection of celebrations, portraits, and details, each chosen for the feeling it carries.",
     frames: [
       { id: "editorial-1", title: "Reception Dance Energy", image: "/assets/gallery/reception-dance.png" },
       { id: "editorial-2", title: "Waterfront Wedding Glow", image: "/assets/gallery/wedding-waterfront.png" },

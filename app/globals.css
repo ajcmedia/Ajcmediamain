@@ -4,8 +4,8 @@
 
 :root { color-scheme: light; --ink: 38 36 31; --muted: 113 107 97; --accent: 81 76 66; --gold: 132 112 82; --surface: 250 249 246; }
 * { box-sizing: border-box; }
-html { scroll-behavior: auto; scroll-padding-top: 90px; }
-body { margin: 0; min-width: 320px; background: #faf9f6; color: #26241f; }
+html { scroll-behavior: auto; scroll-padding-top: 90px; overflow-x: clip; }
+body { margin: 0; min-width: 320px; overflow-x: clip; background: #faf9f6; color: #26241f; }
 ::selection { background: #e8dfd1; }
 button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 button, a { touch-action: manipulation; }

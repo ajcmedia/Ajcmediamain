@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const MAX_INPUT_BYTES = 20 * 1024 * 1024;
-const MAX_STORED_BYTES = 12 * 1024 * 1024;
+const MAX_STORED_BYTES = 6 * 1024 * 1024;
 const allowedTypes = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/avif", "image/heic", "image/heif"]);
 const extensionTypes: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -102,7 +102,9 @@ async function normalizeImage(file: File) {
   }
 
   if (outputType !== "image/gif") {
-    buffer = await optimizeWebImage(buffer, outputType);
+    buffer = await optimizeWebImage(buffer);
+    outputType = "image/webp";
+    outputName = replaceExtension(outputName, ".webp");
   }
 
   if (buffer.length > MAX_STORED_BYTES) {
@@ -117,7 +119,7 @@ async function normalizeImage(file: File) {
   };
 }
 
-async function optimizeWebImage(input: Buffer, contentType: string) {
+async function optimizeWebImage(input: Buffer) {
   try {
     let pipeline = sharp(input, {
       failOn: "warning",
@@ -125,23 +127,13 @@ async function optimizeWebImage(input: Buffer, contentType: string) {
     })
       .rotate()
       .resize({
-        width: 4096,
-        height: 4096,
+        width: 2560,
+        height: 2560,
         fit: "inside",
         withoutEnlargement: true
       });
 
-    if (contentType === "image/jpeg") {
-      pipeline = pipeline.jpeg({ quality: 90, mozjpeg: true });
-    } else if (contentType === "image/png") {
-      pipeline = pipeline.png({ compressionLevel: 9 });
-    } else if (contentType === "image/webp") {
-      pipeline = pipeline.webp({ quality: 90 });
-    } else if (contentType === "image/avif") {
-      pipeline = pipeline.avif({ quality: 70, effort: 3 });
-    }
-
-    return await pipeline.toBuffer();
+    return await pipeline.webp({ quality: 84, effort: 4, smartSubsample: true }).toBuffer();
   } catch {
     throw new ImageUploadError("The selected image could not be read. Try exporting it as a JPEG or PNG and upload that copy.");
   }

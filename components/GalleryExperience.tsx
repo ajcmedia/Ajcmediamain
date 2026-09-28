@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { PortfolioProject, SiteContent } from "@/types/site";
 import { Reveal } from "@/components/Reveal";
@@ -104,7 +105,7 @@ export function GalleryExperience({ content }: { content: SiteContent["gallery"]
           </button>
           <div className="relative z-10 grid justify-items-center">
             <div className="lightbox-image">
-              <img className="max-h-[65vh] w-auto max-w-full object-contain" src={activeProject.image} alt={activeProject.title} />
+              <Image className="max-h-[65vh] h-auto w-auto max-w-full object-contain" src={activeProject.image} alt={activeProject.title} width={1920} height={1280} sizes="95vw" />
             </div>
             <div className="max-w-3xl text-center">
               <h3 className="mt-5 text-[clamp(1.7rem,4vw,3rem)] font-bold text-ink">{activeProject.title}</h3>
@@ -130,12 +131,26 @@ function GalleryProjectImage({ project }: { project: PortfolioProject }) {
 
   return (
     <div className={`relative overflow-hidden border-b border-ink/10 bg-night/80 ${galleryCropClasses[cropAspect]}`}>
-      <img
-        className={`${isCropped ? "h-full w-full object-cover" : "h-auto w-full"} transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110`}
-        src={project.image}
-        alt={project.title}
-        style={getImagePresentationStyle(project.position)}
-      />
+      {isCropped ? (
+        <Image
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110"
+          src={project.image}
+          alt={project.title}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 34vw"
+          style={getImagePresentationStyle(project.position)}
+        />
+      ) : (
+        <Image
+          className="h-auto w-full transition duration-500 group-hover:scale-[1.015] group-hover:saturate-110"
+          src={project.image}
+          alt={project.title}
+          width={1600}
+          height={1200}
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 34vw"
+          style={getImagePresentationStyle(project.position)}
+        />
+      )}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(61,229,255,0.08),transparent_45%)] opacity-80" />
     </div>
   );
